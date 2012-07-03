@@ -15,8 +15,10 @@ import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.api.Constants;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.HiveStorageHandler;
 import org.apache.hadoop.hive.ql.plan.TableDesc;
+import org.apache.hadoop.hive.ql.security.authorization.HiveAuthorizationProvider;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.OutputFormat;
@@ -282,5 +284,23 @@ public class CassandraStorageHandler
   @Override
   public void rollbackDropTable(Table table) throws MetaException {
     // nothing to do
+  }
+
+  @Override
+  public HiveAuthorizationProvider getAuthorizationProvider() throws HiveException {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public void configureInputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void configureOutputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
+    // TODO Auto-generated method stub
+
   }
 }

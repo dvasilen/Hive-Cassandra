@@ -9,7 +9,6 @@ import java.util.Map;
 import junit.framework.TestCase;
 
 import org.apache.cassandra.config.CFMetaData;
-import org.apache.cassandra.config.ConfigurationException;
 import org.apache.cassandra.config.KSMetaData;
 import org.apache.cassandra.config.Schema;
 import org.apache.cassandra.contrib.utils.service.CassandraServiceDataCleaner;
@@ -56,20 +55,13 @@ public abstract class BaseCassandraConnectionTest extends TestCase {
 
   private void loadSchema()
   {
-      try
+      for (KSMetaData ksm : schemaDefinition())
       {
-          for (KSMetaData ksm : schemaDefinition())
-          {
-              for (CFMetaData cfm : ksm.cfMetaData().values()) {
+          for (CFMetaData cfm : ksm.cfMetaData().values()) {
 
-                  Schema.instance.load(cfm);
-              }
-              Schema.instance.setTableDefinition(ksm, Schema.instance.getVersion());
+              Schema.instance.load(cfm);
           }
-      }
-      catch (ConfigurationException e)
-      {
-          throw new RuntimeException(e);
+          Schema.instance.setTableDefinition(ksm);
       }
   }
 
@@ -95,7 +87,7 @@ public abstract class BaseCassandraConnectionTest extends TestCase {
 
   private static CFMetaData standardCFMD(String ksName, String cfName)
   {
-      return new CFMetaData(ksName, cfName, ColumnFamilyType.Standard, BytesType.instance, null).keyCacheSize(0);
+      return new CFMetaData(ksName, cfName, ColumnFamilyType.Standard, BytesType.instance, null);
   }
 
 }

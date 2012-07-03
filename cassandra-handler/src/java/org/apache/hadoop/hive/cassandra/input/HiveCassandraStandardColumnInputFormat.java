@@ -99,24 +99,25 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, MapWritable> {
 
 
     try {
+
+      boolean wideRows = false;
+      if(isTransposed && tac.getConfiguration().getBoolean(AbstractColumnSerDe.CASSANDRA_ENABLE_WIDEROW_ITERATOR, true)) {
+        wideRows = true;
+      }
+
       ConfigHelper.setInputColumnFamily(tac.getConfiguration(),
-          cassandraSplit.getKeyspace(), cassandraSplit.getColumnFamily());
+          cassandraSplit.getKeyspace(), cassandraSplit.getColumnFamily(), wideRows);
 
       ConfigHelper.setInputSlicePredicate(tac.getConfiguration(), predicate);
       ConfigHelper.setRangeBatchSize(tac.getConfiguration(), cassandraSplit.getRangeBatchSize());
-      ConfigHelper.setRpcPort(tac.getConfiguration(), cassandraSplit.getPort() + "");
-      ConfigHelper.setInitialAddress(tac.getConfiguration(), cassandraSplit.getHost());
-      ConfigHelper.setPartitioner(tac.getConfiguration(), cassandraSplit.getPartitioner());
+      ConfigHelper.setInputRpcPort(tac.getConfiguration(), cassandraSplit.getPort() + "");
+      ConfigHelper.setInputInitialAddress(tac.getConfiguration(), cassandraSplit.getHost());
+      ConfigHelper.setInputPartitioner(tac.getConfiguration(), cassandraSplit.getPartitioner());
       // Set Split Size
       ConfigHelper.setInputSplitSize(tac.getConfiguration(), cassandraSplit.getSplitSize());
 
-      CassandraHiveRecordReader rr = null;
+      CassandraHiveRecordReader  rr = new CassandraHiveRecordReader(new ColumnFamilyRecordReader(), isTransposed);
 
-      if(isTransposed && tac.getConfiguration().getBoolean(AbstractColumnSerDe.CASSANDRA_ENABLE_WIDEROW_ITERATOR, true)) {
-        rr = new CassandraHiveRecordReader(new ColumnFamilyWideRowRecordReader(), isTransposed);
-      } else {
-        rr = new CassandraHiveRecordReader(new ColumnFamilyRecordReader(), isTransposed);
-      }
       rr.initialize(cfSplit, tac);
 
       return rr;
@@ -156,9 +157,9 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, MapWritable> {
     SlicePredicate predicate = new SlicePredicate();
     predicate.setSlice_range(range);
 
-    ConfigHelper.setRpcPort(jobConf, "" + rpcPort);
-    ConfigHelper.setInitialAddress(jobConf, host);
-    ConfigHelper.setPartitioner(jobConf, partitioner);
+    ConfigHelper.setInputRpcPort(jobConf, "" + rpcPort);
+    ConfigHelper.setInputInitialAddress(jobConf, host);
+    ConfigHelper.setInputPartitioner(jobConf, partitioner);
     ConfigHelper.setInputSlicePredicate(jobConf, predicate);
     ConfigHelper.setInputColumnFamily(jobConf, ks, cf);
     ConfigHelper.setRangeBatchSize(jobConf, sliceRangeSize);
