@@ -228,11 +228,7 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, MapWritable> {
       org.apache.hadoop.mapreduce.InputSplit arg0, TaskAttemptContext tac) throws IOException,
       InterruptedException {
 
-      if(isTransposed && tac.getConfiguration().getBoolean(AbstractColumnSerDe.CASSANDRA_ENABLE_WIDEROW_ITERATOR, true)) {
-        return new CassandraHiveRecordReader(new ColumnFamilyWideRowRecordReader(), isTransposed);
-      } else {
-        return new CassandraHiveRecordReader(new ColumnFamilyRecordReader(), isTransposed);
-      }
+      return new CassandraHiveRecordReader(new ColumnFamilyRecordReader(), isTransposed);
   }
 
 
