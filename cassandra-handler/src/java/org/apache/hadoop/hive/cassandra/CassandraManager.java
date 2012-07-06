@@ -154,9 +154,14 @@ public class CassandraManager {
     try {
       KsDef ks = new KsDef();
       ks.setName(getCassandraKeyspace());
-      ks.setReplication_factor(getReplicationFactor());
       ks.setStrategy_class(getStrategy());
 
+      if (!keyspace.isSetStrategy_options())
+      {
+        keyspace.setStrategy_options(new HashMap<String, String>());
+        keyspace.putToStrategy_options("replication_factor", Integer.toString(getReplicationFactor()));
+      }
+    
       ks.addToCf_defs(getCfDef());
 
       clientHolder.getProxyConnection().system_add_keyspace(ks);
