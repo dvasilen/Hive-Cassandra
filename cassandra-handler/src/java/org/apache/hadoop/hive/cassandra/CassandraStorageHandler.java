@@ -294,13 +294,15 @@ public class CassandraStorageHandler
 
   @Override
   public void configureInputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
-    // TODO Auto-generated method stub
+
+    configureTableJobProperties(tableDesc, jobProperties);
 
   }
 
   @Override
   public void configureOutputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
-    // TODO Auto-generated method stub
+
+    configureTableJobProperties(tableDesc, jobProperties);
 
   }
 }
