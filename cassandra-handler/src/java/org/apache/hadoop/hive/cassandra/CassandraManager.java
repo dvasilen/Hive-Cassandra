@@ -156,10 +156,10 @@ public class CassandraManager {
       ks.setName(getCassandraKeyspace());
       ks.setStrategy_class(getStrategy());
 
-      if (!keyspace.isSetStrategy_options())
+      if (!ks.isSetStrategy_options())
       {
-        keyspace.setStrategy_options(new HashMap<String, String>());
-        keyspace.putToStrategy_options("replication_factor", Integer.toString(getReplicationFactor()));
+        ks.setStrategy_options(new HashMap<String, String>());
+        ks.putToStrategy_options("replication_factor", Integer.toString(getReplicationFactor()));
       }
     
       ks.addToCf_defs(getCfDef());
