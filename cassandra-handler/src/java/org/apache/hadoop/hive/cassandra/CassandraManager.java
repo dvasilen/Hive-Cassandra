@@ -3,6 +3,7 @@ package org.apache.hadoop.hive.cassandra;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.InvalidRequestException;
@@ -157,10 +158,9 @@ public class CassandraManager {
       ks.setStrategy_class(getStrategy());
 
       if (!ks.isSetStrategy_options())
-      {
         ks.setStrategy_options(new HashMap<String, String>());
-        ks.putToStrategy_options("replication_factor", Integer.toString(getReplicationFactor()));
-      }
+      
+      ks.putToStrategy_options("replication_factor", Integer.toString(getReplicationFactor()));
     
       ks.addToCf_defs(getCfDef());
 
