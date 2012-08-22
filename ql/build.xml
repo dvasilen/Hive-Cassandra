@@ -20,6 +20,8 @@
 
 <project name="ql" default="jar">
 
+  <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
+  
   <property name="ql.lib.dir" value="${basedir}/lib"/>
   <property name="src.dir"  location="${basedir}/src/java"/>
   <property name="ql.test.query.dir" location="${basedir}/src/test/queries"/>
