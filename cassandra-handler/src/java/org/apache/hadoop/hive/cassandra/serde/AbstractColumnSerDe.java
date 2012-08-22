@@ -44,6 +44,7 @@ public abstract class AbstractColumnSerDe implements SerDe {
   public static final String CASSANDRA_PORT = "cassandra.port"; // rcpPort
   public static final String CASSANDRA_PARTITIONER = "cassandra.partitioner"; // partitioner
   public static final String CASSANDRA_COL_MAPPING = "cassandra.columns.mapping";
+  public static final String CASSANDRA_INDEXED_COLUMNS = "cassandra.indexed.columns";
   public static final String CASSANDRA_BATCH_MUTATION_SIZE = "cassandra.batchmutate.size";
   public static final String CASSANDRA_SLICE_PREDICATE_COLUMN_NAMES = "cassandra.slice.predicate.column_names";
   public static final String CASSANDRA_SLICE_PREDICATE_RANGE_START = "cassandra.slice.predicate.range.start";
@@ -73,7 +74,7 @@ public abstract class AbstractColumnSerDe implements SerDe {
   public static final String DEFAULT_CASSANDRA_PORT = "9160";
   public static final String DEFAULT_CONSISTENCY_LEVEL = "ONE";
   public static final int DEFAULT_BATCH_MUTATION_SIZE = 500;
-
+  public static final String DELIMITER = ",";
 
   /* names of columns from SerdeParameters */
   protected List<String> cassandraColumnNames;
@@ -84,6 +85,7 @@ public abstract class AbstractColumnSerDe implements SerDe {
   protected ObjectInspector cachedObjectInspector;
   protected SerDeParameters serdeParams;
   protected LazyCassandraRow cachedCassandraRow;
+  protected String cassandraKeyspace;
   protected String cassandraColumnFamily;
   protected List<BytesWritable> cassandraColumnNamesBytes;
 
@@ -273,6 +275,32 @@ public abstract class AbstractColumnSerDe implements SerDe {
     return createColumnMappingString(colNames);
   }
 
+  /**
+   * Parse cassandra keyspace from table properties.
+   *
+   * @param tbl table properties
+   * @return cassandra keyspace
+   * @throws SerDeException error parsing keyspace
+   */
+  protected String parseCassandraKeyspace(Properties tbl) throws SerDeException {
+    String result = tbl.getProperty(CASSANDRA_KEYSPACE_NAME);
+
+    if (result == null) {
+
+      result = tbl
+          .getProperty(org.apache.hadoop.hive.metastore.api.Constants.META_TABLE_NAME);
+
+      if (result == null) {
+        throw new SerDeException("CassandraKeyspace not defined" + tbl.toString());
+      }
+
+      if (result.indexOf(".") != -1) {
+        result = result.substring(0, result.indexOf("."));
+      }
+    }
+
+    return result;
+  }
 
   /**
    * Parse cassandra column family name from table properties.
@@ -281,7 +309,7 @@ public abstract class AbstractColumnSerDe implements SerDe {
    * @return cassandra column family name
    * @throws SerDeException error parsing column family name
    */
-  protected String getCassandraColumnFamily(Properties tbl) throws SerDeException {
+  protected String parseCassandraColumnFamily(Properties tbl) throws SerDeException {
     String result = tbl.getProperty(CASSANDRA_CF_NAME);
 
     if (result == null) {
@@ -425,4 +453,17 @@ public abstract class AbstractColumnSerDe implements SerDe {
     return null;
   }
 
+  /**
+   * @return the name of the cassandra keyspace as parsed from table properties
+   */
+  public String getCassandraKeyspace(){
+    return cassandraKeyspace;
+  }
+
+  /**
+   * @return the name of the cassandra columnfamily as parsed from table properties
+   */
+  public String getCassandraColumnFamily(){
+    return cassandraColumnFamily;
+  }
 }

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.cassandra.config.ConfigurationException;
 import org.apache.cassandra.db.marshal.AbstractType;
@@ -13,13 +14,22 @@ import org.apache.cassandra.hadoop.ColumnFamilyInputFormat;
 import org.apache.cassandra.hadoop.ColumnFamilyRecordReader;
 import org.apache.cassandra.hadoop.ColumnFamilySplit;
 import org.apache.cassandra.hadoop.ConfigHelper;
+import org.apache.cassandra.thrift.ColumnDef;
+import org.apache.cassandra.thrift.IndexExpression;
 import org.apache.cassandra.thrift.SlicePredicate;
 import org.apache.cassandra.thrift.SliceRange;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.cassandra.CassandraPushdownPredicate;
 import org.apache.hadoop.hive.cassandra.serde.AbstractColumnSerDe;
+import org.apache.hadoop.hive.cassandra.serde.CassandraColumnSerDe;
+import org.apache.hadoop.hive.ql.exec.Utilities;
+import org.apache.hadoop.hive.ql.index.IndexPredicateAnalyzer;
+import org.apache.hadoop.hive.ql.index.IndexSearchCondition;
+import org.apache.hadoop.hive.ql.plan.ExprNodeDesc;
+import org.apache.hadoop.hive.ql.plan.TableScanDesc;
 import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.MapWritable;
@@ -115,6 +125,13 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, MapWritable> {
       ConfigHelper.setInputPartitioner(tac.getConfiguration(), cassandraSplit.getPartitioner());
       // Set Split Size
       ConfigHelper.setInputSplitSize(tac.getConfiguration(), cassandraSplit.getSplitSize());
+
+      LOG.info("Validators : " + tac.getConfiguration().get(CassandraColumnSerDe.CASSANDRA_VALIDATOR_TYPE));
+      List<IndexExpression> indexExpr = parseFilterPredicate(jobConf);
+      if (indexExpr != null) {
+        //We have pushed down a filter from the Hive query, we can use this against secondary indexes
+        ConfigHelper.setInputRange(tac.getConfiguration(), indexExpr);
+      }
 
       CassandraHiveRecordReader  rr = new CassandraHiveRecordReader(new ColumnFamilyRecordReader(), isTransposed);
 
@@ -231,5 +248,48 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, MapWritable> {
       return new CassandraHiveRecordReader(new ColumnFamilyRecordReader(), isTransposed);
   }
 
+  /**
+   * Look for a filter predicate pushed down by the StorageHandler. If a filter was pushed
+   * down, the filter expression and the list of indexed columns should be set in the
+   * JobConf properties. If either is not set, we can't deal with the filter here so return
+   * null. If both are present in the JobConf, translate the filter expression into a list of C*
+   * IndexExpressions which we'll later use in queries. The filter expression should translate exactly
+   * to IndexExpressions, as our HiveStoragePredicateHandler implementation has already done this
+   * once. As an additional check, if this is no longer the case & there is some residual predicate
+   * after translation, throw an Exception.
+   *
+   * @param jobConf Job Configuration
+   *
+   * @return C* IndexExpressions representing the pushed down filter or null pushdown is not possible
+   * @throws IOException if there are problems deserializing from the JobConf
+   */
+  private List<IndexExpression> parseFilterPredicate(JobConf jobConf) throws IOException {
+    String filterExprSerialized = jobConf.get(TableScanDesc.FILTER_EXPR_CONF_STR);
+    if (filterExprSerialized == null) {
+      return null;
+    }
 
+    ExprNodeDesc filterExpr = Utilities.deserializeExpression(filterExprSerialized, jobConf);
+    String encodedIndexedColumns = jobConf.get(AbstractColumnSerDe.CASSANDRA_INDEXED_COLUMNS);
+    Set<ColumnDef> indexedColumns = CassandraPushdownPredicate.deserializeIndexedColumns(encodedIndexedColumns);
+    if (indexedColumns.isEmpty()) {
+      return null;
+    }
+
+    IndexPredicateAnalyzer analyzer = CassandraPushdownPredicate.newIndexPredicateAnalyzer(indexedColumns);
+    List<IndexSearchCondition> searchConditions = new ArrayList<IndexSearchCondition>();
+    ExprNodeDesc residualPredicate = analyzer.analyzePredicate(filterExpr, searchConditions);
+
+    // There should be no residual predicate since we already negotiated
+    // that earlier in CassandraStorageHandler.decomposePredicate.
+    if (residualPredicate != null) {
+      throw new RuntimeException( "Unexpected residual predicate : " + residualPredicate.getExprString());
+    }
+
+    if (! searchConditions.isEmpty()) {
+      return CassandraPushdownPredicate.translateSearchConditions(searchConditions, indexedColumns);
+    } else {
+      throw new RuntimeException("At least one search condition expected in filter predicate");
+    }
+  }
 }

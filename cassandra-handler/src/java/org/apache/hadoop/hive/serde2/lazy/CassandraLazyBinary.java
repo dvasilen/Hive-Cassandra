@@ -37,8 +37,9 @@ public class CassandraLazyBinary extends LazyBinary {
       }
     }
 
+    // TODO - need to test this with some base64 data
     if(allValid) {
-      arrayByteBase64 = Base64.isArrayByteBase64(recv);
+//      arrayByteBase64 = Base64.isArrayByteBase64(recv);
     }
 
     if (arrayByteBase64) {
