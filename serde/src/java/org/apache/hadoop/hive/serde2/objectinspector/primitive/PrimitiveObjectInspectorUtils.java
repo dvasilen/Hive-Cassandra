@@ -178,7 +178,7 @@ public final class PrimitiveObjectInspectorUtils {
       Short.class, ShortWritable.class);
   public static final PrimitiveTypeEntry timestampTypeEntry = new PrimitiveTypeEntry(
       PrimitiveCategory.TIMESTAMP, Constants.TIMESTAMP_TYPE_NAME, null,
-      Object.class, TimestampWritable.class);
+      Timestamp.class, TimestampWritable.class);
 
   // The following is a complex type for special handling
   public static final PrimitiveTypeEntry unknownTypeEntry = new PrimitiveTypeEntry(

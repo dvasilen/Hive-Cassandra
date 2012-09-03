@@ -224,6 +224,7 @@ public class CassandraPushdownPredicate {
       AbstractType validator = getValidator(columnInfos, columnName);
       ByteBuffer bytes = getIndexExpressionValue(condition.getConstantDesc(), poi, writable, validator);
       serializeStream.write(ByteBufferUtil.getArray(bytes));
+
       value = new byte[serializeStream.getCount()];
       System.arraycopy( serializeStream.getData(), 0, value, 0, serializeStream.getCount());
     } catch (HiveException e) {
