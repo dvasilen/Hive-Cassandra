@@ -61,6 +61,7 @@ public class HWIServer {
     if ("true".equalsIgnoreCase(System.getProperty("kerberos.enable")))
     {
       System.err.println("Hive web interface is disable for it doesn't support kerberos authentication.");
+      System.exit(0);
     }
 
     HiveConf conf = new HiveConf(this.getClass());

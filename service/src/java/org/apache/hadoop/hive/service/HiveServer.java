@@ -642,6 +642,7 @@ public class HiveServer extends ThriftHive {
       if ("true".equalsIgnoreCase(System.getProperty("kerberos.enable")))
       {
         System.err.println("Hive server is disable for it doesn't support kerberos authentication.");
+        System.exit(0);
       }
 
       HiveServerCli cli = new HiveServerCli();
