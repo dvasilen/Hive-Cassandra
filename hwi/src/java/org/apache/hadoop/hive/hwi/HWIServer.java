@@ -39,7 +39,7 @@ public class HWIServer {
   private final String[] args;
 
   /**
-   * 
+   *
    * @param args
    *          These are the command line arguments. Usually -hiveconf.
    * @throws java.io.IOException
@@ -51,11 +51,17 @@ public class HWIServer {
   /**
    * This method initialized the internal Jetty Servlet Engine. It adds the hwi
    * context path.
-   * 
+   *
    * @throws java.io.IOException
    *           Port already in use, bad bind etc.
    */
   public void start() throws IOException {
+
+    // exit if kerberos is enable
+    if ("true".equalsIgnoreCase(System.getProperty("kerberos.enable")))
+    {
+      System.err.println("Hive web interface is disable for it's not support kerberos authentication.");
+    }
 
     HiveConf conf = new HiveConf(this.getClass());
 
@@ -118,13 +124,13 @@ public class HWIServer {
   }
 
   /**
-   * 
+   *
    * @param args
    *          as of now no arguments are supported
    * @throws java.lang.Exception
    *           Could be thrown if due to issues with Jetty or bad configuration
    *           options
-   * 
+   *
    */
   public static void main(String[] args) throws Exception {
     HWIServer hwi = new HWIServer(args);
@@ -134,7 +140,7 @@ public class HWIServer {
 
   /**
    * Shut down the running HWI Server.
-   * 
+   *
    * @throws Exception
    *           Running Thread.stop() can and probably will throw this
    */
