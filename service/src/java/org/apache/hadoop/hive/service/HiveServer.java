@@ -639,8 +639,7 @@ public class HiveServer extends ThriftHive {
     try {
 
       // exit if kerberos is enable
-      if ("true".equalsIgnoreCase(System.getProperty("kerberos.enable")))
-      {
+      if (Boolean.getBoolean(System.getProperty("kerberos.enable"))) {
         System.err.println("Hive server cannot be run when security is enabled (kerberos authentication).");
         System.exit(0);
       }
