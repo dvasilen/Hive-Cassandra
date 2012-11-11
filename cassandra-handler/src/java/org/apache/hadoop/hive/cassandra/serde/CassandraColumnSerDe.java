@@ -39,7 +39,8 @@ public class CassandraColumnSerDe extends AbstractColumnSerDe {
   @Override
   protected void initCassandraSerDeParameters(Configuration job, Properties tbl, String serdeName)
       throws SerDeException {
-    cassandraColumnFamily = getCassandraColumnFamily(tbl);
+    cassandraKeyspace = parseCassandraKeyspace(tbl);
+    cassandraColumnFamily = parseCassandraColumnFamily(tbl);
     cassandraColumnNames = parseOrCreateColumnMapping(tbl);
 
     cassandraColumnNamesBytes = new ArrayList<BytesWritable>();

@@ -21,7 +21,7 @@
 <project xmlns:ivy="antlib:org.apache.ivy.ant"
          xmlns:artifact="urn:maven-artifact-ant"
          name="hivecommon" default="jar">
-
+  <taskdef resource="net/sf/antcontrib/antcontrib.properties"/>
   <property name="hive.root" location="${basedir}/.."/>
   <property file="${hive.root}/build.properties"/>
   <property file="${user.home}/build.properties" />
