@@ -34,9 +34,9 @@ import java.util.Properties;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hive.common.ServerUtils;
 import org.apache.hadoop.hive.common.LogUtils;
 import org.apache.hadoop.hive.common.LogUtils.LogInitializationException;
+import org.apache.hadoop.hive.common.ServerUtils;
 import org.apache.hadoop.hive.common.cli.CommonCliOptions;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStore;
@@ -61,8 +61,7 @@ import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportFactory;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
+
 import com.facebook.fb303.fb_status;
 
 /**
@@ -638,6 +637,13 @@ public class HiveServer extends ThriftHive {
 
   public static void main(String[] args) {
     try {
+
+      // exit if kerberos is enable
+      if (Boolean.getBoolean(System.getProperty("kerberos.enable"))) {
+        System.err.println("Hive server cannot be run when security is enabled (kerberos authentication).");
+        System.exit(0);
+      }
+
       HiveServerCli cli = new HiveServerCli();
 
       cli.parse(args);
