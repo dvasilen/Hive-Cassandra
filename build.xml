@@ -1113,8 +1113,8 @@
             file="${mvn.jar.dir}/hive-${hive.project}-${version}.jar" settingsFile="${settings.file}">
           <pom refid="hive.project.pom" />
           <remoteRepository
-              id="datastax-snapshots"
-              url="http://mvn.riptano.com/content/repositories/snapshots" />
+              id="${mvn.publish.repo}"
+              url="${mvn.publish.url}" />
         </artifact:deploy>
       </else>
     </if>
