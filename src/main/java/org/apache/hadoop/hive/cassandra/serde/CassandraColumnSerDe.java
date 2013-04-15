@@ -10,7 +10,7 @@ import org.apache.cassandra.db.marshal.BytesType;
 import org.apache.cassandra.db.marshal.TypeParser;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.serde.Constants;
+import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -69,7 +69,7 @@ public class CassandraColumnSerDe extends AbstractColumnSerDe {
         TypeInfo typeInfo = serdeParams.getColumnTypes().get(i);
         if ((typeInfo.getCategory() != Category.MAP) ||
             (((MapTypeInfo) typeInfo).getMapKeyTypeInfo().getTypeName()
-                != Constants.STRING_TYPE_NAME)) {
+                != serdeConstants.STRING_TYPE_NAME)) {
 
           throw new SerDeException(
               serdeName + ": Cassandra column family '"

@@ -12,7 +12,7 @@ import org.apache.hadoop.hive.cassandra.serde.AbstractColumnSerDe;
 import org.apache.hadoop.hive.cassandra.serde.CassandraColumnSerDe;
 import org.apache.hadoop.hive.metastore.HiveMetaHook;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
-import org.apache.hadoop.hive.metastore.api.Constants;
+import org.apache.hadoop.hive.metastore.api.hive_metastoreConstants;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.metadata.HiveStorageHandler;
@@ -32,8 +32,8 @@ public class CassandraStorageHandler implements HiveStorageHandler, HiveMetaHook
     Properties tableProperties = tableDesc.getProperties();
 
     // Try parsing the keyspace.columnFamily
-    String tableName = tableProperties.getProperty(Constants.META_TABLE_NAME);
-    String dbName = tableProperties.getProperty(Constants.META_TABLE_DB);
+    String tableName = tableProperties.getProperty(hive_metastoreConstants.META_TABLE_NAME);
+    String dbName = tableProperties.getProperty(hive_metastoreConstants.META_TABLE_DB);
 
     String keyspace = tableProperties.getProperty(AbstractColumnSerDe.CASSANDRA_KEYSPACE_NAME);
     String columnFamily = tableProperties.getProperty(AbstractColumnSerDe.CASSANDRA_CF_NAME);
@@ -56,7 +56,7 @@ public class CassandraStorageHandler implements HiveStorageHandler, HiveMetaHook
     String columnInfo = tableProperties.getProperty(AbstractColumnSerDe.CASSANDRA_COL_MAPPING);
     if(columnInfo == null) {
       columnInfo = AbstractColumnSerDe.createColumnMappingString(
-        tableProperties.getProperty(org.apache.hadoop.hive.serde.Constants.LIST_COLUMNS));
+        tableProperties.getProperty(org.apache.hadoop.hive.serde.serdeConstants.LIST_COLUMNS));
     }
     jobProperties.put(AbstractColumnSerDe.CASSANDRA_COL_MAPPING, columnInfo);
 

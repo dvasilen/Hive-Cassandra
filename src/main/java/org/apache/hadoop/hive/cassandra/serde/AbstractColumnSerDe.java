@@ -12,7 +12,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.cassandra.input.LazyCassandraRow;
 import org.apache.hadoop.hive.cassandra.output.CassandraPut;
-import org.apache.hadoop.hive.serde.Constants;
+import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.SerDeStats;
@@ -287,7 +287,7 @@ public abstract class AbstractColumnSerDe implements SerDe {
     if (result == null) {
 
       result = tbl
-          .getProperty(org.apache.hadoop.hive.metastore.api.Constants.META_TABLE_NAME);
+          .getProperty(org.apache.hadoop.hive.metastore.api.hive_metastoreConstants.META_TABLE_NAME);
 
       if (result == null) {
         throw new SerDeException("CassandraColumnFamily not defined" + tbl.toString());
@@ -316,7 +316,7 @@ public abstract class AbstractColumnSerDe implements SerDe {
     if (prop != null) {
       return parseColumnMapping(prop);
     } else {
-      String tblColumnStr = tbl.getProperty(Constants.LIST_COLUMNS);
+      String tblColumnStr = tbl.getProperty(serdeConstants.LIST_COLUMNS);
 
       if (tblColumnStr != null) {
         //auto-create
