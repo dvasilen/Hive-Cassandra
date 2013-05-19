@@ -1,4 +1,4 @@
-package org.apache.cassandra.hadoop;
+package org.apache.cassandra.hadoop1;
 
 /*
  *

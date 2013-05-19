@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.hadoop.pig;
+package org.apache.cassandra.hadoop1.pig;
 
 import java.io.IOException;
 import java.math.BigInteger;

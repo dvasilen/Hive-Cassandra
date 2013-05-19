@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.hadoop;
+package org.apache.cassandra.hadoop1;
 
 
 import java.io.IOException;
@@ -36,6 +36,7 @@ import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 
 import javax.security.auth.login.LoginException;
+import org.apache.cassandra.hadoop.ConfigHelper;
 
 /**
  * The <code>ColumnFamilyOutputFormat</code> acts as a Hadoop-specific

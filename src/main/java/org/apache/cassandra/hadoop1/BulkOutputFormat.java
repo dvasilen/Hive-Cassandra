@@ -15,12 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.hadoop;
+package org.apache.cassandra.hadoop1;
 
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
+import org.apache.cassandra.hadoop.ConfigHelper;
 
 import org.apache.cassandra.thrift.Mutation;
 import org.apache.hadoop.conf.Configuration;
