@@ -1,12 +1,5 @@
 package org.apache.hadoop.hive.cassandra;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.cassandra.config.CFMetaData;
 import org.apache.cassandra.config.KSMetaData;
 import org.apache.cassandra.config.Schema;
@@ -20,22 +13,41 @@ import org.apache.cassandra.thrift.Cassandra;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
-public class BaseCassandraConnectionTest {
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
-  protected static CassandraProxyClient client;
+public class BaseCassandraConnection {
+
+  private static final BaseCassandraConnection instance = new BaseCassandraConnection();
+
+  private BaseCassandraConnection() {
+
+  }
+
+  public static BaseCassandraConnection getInstance() {
+    return instance;
+  }
+
+
+  public static CassandraProxyClient client;
   private static EmbeddedCassandraService cassandra;
-  protected String ksName = "TestKeyspace";
-  protected String cfName = "TestColumnFamily";
+  public String ksName = "TestKeyspace";
+  public String cfName = "TestColumnFamily";
 
   /**
    * Start the embedded cassandra server if it is not up.
    *
-   * @throws IOException
-   * @throws TTransportException
-   * @throws TException
+   * @throws java.io.IOException
+   * @throws org.apache.thrift.transport.TTransportException
+   *
+   * @throws org.apache.thrift.TException
    * @throws CassandraException
    */
-  protected void maybeStartServer() throws IOException, TTransportException, TException, CassandraException {
+  public void maybeStartServer() throws IOException, TTransportException, TException, CassandraException {
 
     File conf = new File("src/test/resources/cassandra.yaml");
 
@@ -94,5 +106,4 @@ public class BaseCassandraConnectionTest {
   private static CFMetaData standardCFMD(String ksName, String cfName) {
     return new CFMetaData(ksName, cfName, ColumnFamilyType.Standard, BytesType.instance, null);
   }
-
 }

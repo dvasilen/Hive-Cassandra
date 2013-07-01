@@ -30,6 +30,26 @@ import org.apache.thrift.transport.TTransportException;
  */
 public class CassandraProxyClient implements java.lang.reflect.InvocationHandler {
 
+  public enum ConnectionStrategy {
+
+    RANDOM(true),
+    ROUND_ROBIN(false),
+    STICKY(false);
+
+    private final Boolean value;
+
+    ConnectionStrategy(Boolean value) {
+      this.value = value;
+    }
+
+    public boolean getValue() {
+      return this.value;
+    }
+
+  }
+
+  ;
+
   private static final Logger logger = Logger.getLogger(CassandraProxyClient.class);
 
   /**
@@ -295,8 +315,8 @@ public class CassandraProxyClient implements java.lang.reflect.InvocationHandler
           for (Object arg : args) {
             argsList = arg.toString() + "\n";
           }
-          logger.info("SOME UNKNOWN EXCEPTION EXECUTING: \n " + m + " on " + proxy + " with " + argsList);
-          logger.error(e.getMessage(), e);
+          //logger.info("SOME UNKNOWN EXCEPTION EXECUTING: \n " + m + " on " + proxy + " with " + argsList);
+          //logger.error(e.getMessage(), e);
           // The other errors, we should not keep trying.
           throw e.getCause();
         }

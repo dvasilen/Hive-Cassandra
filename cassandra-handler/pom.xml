@@ -43,6 +43,7 @@
                 <configuration>
                     <includes>
                         <include>**/CassandraHandlerTestSuite.class</include>
+                        <include>**/CassandraMetastoreTestSuite.class</include>
                     </includes>
                 </configuration>
             </plugin>

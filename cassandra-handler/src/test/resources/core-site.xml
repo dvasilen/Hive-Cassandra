@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<!-- Put site-specific property overrides in this file. -->
+
+<configuration>
+ 
+  <property>
+    <name>fs.default.name</name>
+    <value>cfs:///</value>
+  </property>
+ 
+  <!--
+  <property>
+    <name>fs.default.name</name>
+    <value>cfs-archive:///</value>
+  </property>
+  -->
+
+ <property>
+    <name>fs.cfs.impl</name>
+    <value>org.apache.cassandra.hadoop.fs.CassandraFileSystem</value>
+ </property>
+ 
+  <property>
+    <name>fs.cfs-archive.impl</name>
+    <value>org.apache.cassandra.hadoop.fs.CassandraFileSystem</value>
+ </property>
+
+ <!-- 64 MB default --> 
+<property>
+  <name>fs.local.block.size</name>
+  <value>67108864</value> 
+</property>
+
+<!-- 2 MB SubBlock Size -->
+<property>
+  <name>fs.local.subblock.size</name>
+  <value>2097152</value> 
+</property>
+
+<property>
+  <name>brisk.consistencylevel.read</name>
+  <value>ONE</value>
+</property>
+
+<property>
+  <name>brisk.consistencylevel.write</name>
+  <value>QUORUM</value>
+</property>
+
+</configuration>
