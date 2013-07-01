@@ -26,6 +26,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.cassandra.CassandraException;
 import org.apache.hadoop.hive.cassandra.CassandraProxyClient;
 import org.apache.thrift.TException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Encapsulates common connection settings use with the Cassandra.Iface
@@ -33,9 +35,13 @@ import org.apache.thrift.TException;
  */
 public class CassandraClientHolder {
 
+  private static Logger logger = LoggerFactory.getLogger(CassandraClientHolder.class);
+
   private Cassandra.Iface client;
-  private String keyspaceName;
-  private String columnFamily;
+
+  private final String keyspaceName;
+  private final String columnFamily;
+
   private ConsistencyLevel readCl;
   private ConsistencyLevel writeCl;
 
@@ -43,6 +49,7 @@ public class CassandraClientHolder {
   public CassandraClientHolder(Configuration conf) {
     this.keyspaceName = conf.get(CONF_PARAM_KEYSPACE_NAME, DEF_META_STORE_KEYSPACE);
     this.columnFamily = conf.get(CONF_PARAM_CF_NAME, DEF_META_STORE_CF);
+
     this.readCl = ConsistencyLevel.findByValue(conf.getInt(CONF_PARAM_READ_CL, ConsistencyLevel.QUORUM.getValue()));
     this.writeCl = ConsistencyLevel.findByValue(conf.getInt(CONF_PARAM_WRITE_CL, ConsistencyLevel.QUORUM.getValue()));
     try {
@@ -59,13 +66,27 @@ public class CassandraClientHolder {
 
   public void applyKeyspace() {
     try {
-      client.set_keyspace(keyspaceName);
+      if (this.keyspaceName != null) {
+        client.set_keyspace(this.keyspaceName);
+      } else {
+        throw new RuntimeException("THIS IS A CREEPY EERROR!!");
+      }
     } catch (InvalidRequestException ire) {
       throw new CassandraHiveMetaStoreException("Could not apply the keyspaceName: " + keyspaceName, ire);
     } catch (TException e) {
       throw new CassandraHiveMetaStoreException("transport problem setting keyspace: " + keyspaceName, e);
     }
   }
+
+  /* public void setKeyspace(String ksName) throws CassandraHiveMetaStoreException {
+    try {
+      client.set_keyspace(ksName);
+    } catch (InvalidRequestException ire) {
+      throw new CassandraHiveMetaStoreException("Could not apply the keyspaceName: " + keyspaceName, ire);
+    } catch (TException e) {
+      throw new CassandraHiveMetaStoreException("transport problem setting keyspace: " + keyspaceName, e);
+    }
+  }  */
 
   public Cassandra.Iface getClient() {
     return client;

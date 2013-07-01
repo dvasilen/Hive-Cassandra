@@ -11,18 +11,17 @@ import java.util.List;
 import org.apache.cassandra.config.CFMetaData;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.config.KSMetaData;
-import org.apache.cassandra.db.ColumnFamilyType;
 import org.apache.cassandra.db.marshal.*;
 import org.apache.cassandra.exceptions.SyntaxException;
 import org.apache.cassandra.thrift.CfDef;
 import org.apache.cassandra.thrift.ColumnDef;
-import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.cassandra.thrift.KsDef;
 import org.apache.cassandra.thrift.NotFoundException;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.cassandra.CassandraException;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.Warehouse;
@@ -54,10 +53,19 @@ public class SchemaManagerService {
   private CassandraHiveMetaStore cassandraHiveMetaStore;
   private Warehouse warehouse;
 
+  private final String metaStoreKeyspace;
+  private final String metaStoreColumnFamily;
+
   public SchemaManagerService(CassandraHiveMetaStore cassandraHiveMetaStore, Configuration conf) {
     this.cassandraHiveMetaStore = cassandraHiveMetaStore;
     this.configuration = conf;
+
+
+    metaStoreKeyspace = conf.get(CONF_PARAM_KEYSPACE_NAME, DEF_META_STORE_KEYSPACE);
+    metaStoreColumnFamily = conf.get(CONF_PARAM_CF_NAME, DEF_META_STORE_CF);
+
     this.cassandraClientHolder = new CassandraClientHolder(configuration);
+
     try {
       this.warehouse = new Warehouse(configuration);
     } catch (MetaException me) {
@@ -81,7 +89,7 @@ public class SchemaManagerService {
     try {
       cassandraClientHolder.applyKeyspace();
       return false;
-    } catch (CassandraHiveMetaStoreException chmse) {
+    } catch (CassandraHiveMetaStoreException ce) {
       log.debug("Attempting to create meta store keyspace: First set_keyspace call failed. Sleeping.");
     }
 
@@ -100,14 +108,13 @@ public class SchemaManagerService {
       log.debug("Attempting to create meta store keyspace after sleep.");
     }
 
-    CfDef cf = new CfDef(cassandraClientHolder.getKeyspaceName(),
-            cassandraClientHolder.getColumnFamily());
+    CfDef cf = new CfDef(metaStoreKeyspace, metaStoreColumnFamily);
     cf.setKey_validation_class("UTF8Type");
     cf.setComparator_type("UTF8Type");
-    KsDef ks = new KsDef(cassandraClientHolder.getKeyspaceName(),
+    KsDef ks = new KsDef(metaStoreKeyspace,
             "org.apache.cassandra.locator.SimpleStrategy",
             Arrays.asList(cf));
-    ks.setStrategy_options(KSMetaData.optsWithRF(configuration.getInt(CassandraClientHolder.CONF_PARAM_REPLICATION_FACTOR, 1)));
+    ks.setStrategy_options(KSMetaData.optsWithRF(configuration.getInt(CONF_PARAM_REPLICATION_FACTOR, 1)));
     try {
       cassandraClientHolder.getClient().system_add_keyspace(ks);
       return true;
@@ -232,32 +239,28 @@ public class SchemaManagerService {
   }
 
   private Database buildDatabase(KsDef ksDef) {
-    return getDatabaseByName(ksDef.name);
-
-  }
-
-  private Database getDatabaseByName(String ksname) {
     Database database = new Database();
-    Path dbPath = null;
+    database.setName(ksDef.name);
     try {
-      dbPath = getDatabasePathByName(ksname);
-    } catch (MetaException e) {
-      e.printStackTrace();
+      database.setLocationUri(getDefaultDatabasePath(ksDef.name).toString());
+    } catch (MetaException me) {
+      throw new CassandraHiveMetaStoreException("Could not determine storage URI of database", me);
     }
-    database.setLocationUri(dbPath.toString());
-    database.setName(ksname);
     return database;
   }
 
-  private Path getDatabasePathByName(String keyspace) throws MetaException {
-    Path dbPath;
-    if (keyspace.equalsIgnoreCase(MetaStoreUtils.DEFAULT_DATABASE_NAME)) {
-      dbPath = warehouse.getWhRoot();
-    } else {
-      dbPath = new Path(warehouse.getWhRoot(), keyspace.toLowerCase() + DATABASE_WAREHOUSE_SUFFIX);
+  public Path getDefaultDatabasePath(String dbName) throws MetaException {
+    if (dbName.equalsIgnoreCase(MetaStoreUtils.DEFAULT_DATABASE_NAME)) {
+      return warehouse.getWhRoot();
     }
-    return dbPath;
+    return new Path(warehouse.getWhRoot(), dbName.toLowerCase() + DATABASE_WAREHOUSE_SUFFIX);
   }
+
+  public Path getDefaultTablePath(String dbName, String tableName)
+          throws MetaException {
+    return new Path(getDefaultDatabasePath(dbName), tableName.toLowerCase());
+  }
+
 
   private Table buildTable(CfDef cfDef) {
     Table table = new Table();
@@ -278,9 +281,8 @@ public class SchemaManagerService {
     sd.setParameters(new HashMap<String, String>());
     try {
 
-      sd.setLocation(warehouse.getTablePath(getDatabaseByName(cfDef.keyspace), cfDef.name).toString());
+      sd.setLocation(getDefaultTablePath(cfDef.keyspace, cfDef.name).toString());
 
-      sd.setLocation(warehouse.getTablePath(cfDef.keyspace, cfDef.name).toString());
     } catch (MetaException me) {
       log.error("could not build path information correctly", me);
     }
@@ -296,9 +298,16 @@ public class SchemaManagerService {
 
       addTypeToStorageDescriptor(sd, ByteBufferUtil.bytes("row_key"), keyValidator, keyValidator);
       mapping.append(":key");
+
       validator.append(keyValidator.toString());
 
-      for (ColumnDef column : cfDef.getColumn_metadata()) {
+
+      List<ColumnDef> cdefs = cfDef.getColumn_metadata();
+
+      if (cdefs == null) cdefs = new ArrayList<ColumnDef>();
+
+      for (ColumnDef column : cdefs) {
+
         addTypeToStorageDescriptor(sd, column.name, TypeParser.parse(cfDef.comparator_type), TypeParser.parse(column.getValidation_class()));
         try {
           mapping.append(",");
@@ -371,13 +380,58 @@ public class SchemaManagerService {
     return String.format("Auto-created based on %s from Column Family meta data", type.getClass().getName());
   }
 
+  // TODO are there more appropriate hive config parameters to use here?
+  // Local statics
+  public static final String META_DB_ROW_KEY = "__meta__";
+
+  public static final String DATABASES_ROW_KEY = "__databases__";
+  public static final String DEF_META_STORE_CF = "MetaStore";
+  public static final String DEF_META_STORE_KEYSPACE = "HiveMetaStore";
+
+  public static final String CONF_PARAM_PREFIX = "cassandra.connection.";
+  /**
+   * Initial Apache Cassandra node to which we will connect (localhost)
+   */
+  public static final String CONF_PARAM_HOST = CONF_PARAM_PREFIX + "host";
+  /**
+   * Thrift port for Apache Cassandra (9160)
+   */
+  public static final String CONF_PARAM_PORT = CONF_PARAM_PREFIX + "port";
+  /**
+   * Boolean indicating use of Framed vs. Non-Framed Thrift transport (true)
+   */
+  public static final String CONF_PARAM_FRAMED = CONF_PARAM_PREFIX + "framed";
+  /**
+   * Pick a host at random from the ring as opposed to using the same host (STICKY)
+   */
+  public static final String CONF_PARAM_CONNECTION_STRATEGY = CONF_PARAM_PREFIX + "connectionStrategy";
+  /**
+   * Name of the ColumnFamily in which we will store meta information (MetaStore)
+   */
+  public static final String CONF_PARAM_CF_NAME = CONF_PARAM_PREFIX + "metaStoreColumnFamilyName";
+  /**
+   * Name of the keyspace in which to store meta data (HiveMetaStore)
+   */
+  public static final String CONF_PARAM_KEYSPACE_NAME = CONF_PARAM_PREFIX + "metaStoreKeyspaceName";
+  /**
+   * Consistency Level for read operations against the meta store (QUORUM)
+   */
+  public static final String CONF_PARAM_READ_CL = CONF_PARAM_PREFIX + "readCL";
+  /**
+   * Consistency Level for write operations against the meta store (QUORUM)
+   */
+  public static final String CONF_PARAM_WRITE_CL = CONF_PARAM_PREFIX + "writeCL";
+  /**
+   * The replication factor for the keyspace (1)
+   */
+  public static final String CONF_PARAM_REPLICATION_FACTOR = CONF_PARAM_PREFIX + "replicationFactor";
+
   /**
    * Contains 'system', as well as keyspace names for meta store, and Cassandra File System
    * FIXME: need to ref. the configuration value of the meta store keyspace. Should also coincide
    * with BRISK-190
    */
   public static final String[] SYSTEM_KEYSPACES = new String[]{
-          "system", CassandraClientHolder.DEF_META_STORE_KEYSPACE, "cfs"
+          "system", DEF_META_STORE_KEYSPACE, "cfs"
   };
-
 }

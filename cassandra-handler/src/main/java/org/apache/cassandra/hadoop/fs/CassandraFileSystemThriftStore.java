@@ -26,7 +26,7 @@ import org.apache.cassandra.db.*;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.exceptions.IsBootstrappingException;
 import org.apache.cassandra.exceptions.ReadTimeoutException;
-import org.apache.cassandra.hadoop.ColumnFamilyOutputFormat;
+import org.apache.cassandra.hadoop.ConfigHelper;
 import org.apache.cassandra.io.IColumnSerializer;
 import org.apache.cassandra.io.sstable.Component;
 import org.apache.cassandra.io.sstable.IndexHelper;
@@ -48,6 +48,7 @@ import org.apache.cassandra.utils.UUIDGen;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.cassandra.CassandraProxyClient;
 import org.apache.log4j.Logger;
 import org.apache.thrift.TException;
 import org.xerial.snappy.Snappy;
@@ -147,15 +148,29 @@ public class CassandraFileSystemThriftStore implements CassandraFileSystemStore 
     if (port == -1)
       port = DatabaseDescriptor.getRpcPort(); // default
 
+    if (ConfigHelper.getOutputKeyspace(conf) == null) {
+      ConfigHelper.setOutputKeyspace(conf, keySpace);
+    }
+
     try {
-      client = ColumnFamilyOutputFormat.createAuthenticatedClient(host, port, conf);
+      client = new CassandraProxyClient(host, port, true, CassandraProxyClient.ConnectionStrategy.STICKY.getValue())
+              .getClientHolder().getClient();
+
     } catch (Exception e) {
       throw new IOException(e);
     }
     KsDef ks = checkKeyspace();
 
-    if (ks == null)
+    logger.debug("GOT KEYSPACE: " + ks);
+
+    if (ks == null) {
+      logger.debug("CREATING KEYSPACE: " + ks);
       ks = createKeySpace();
+    }
+
+    ks = checkKeyspace();
+
+    logger.debug("GOT KEYSPACE: " + ks);
 
     initConsistencyLevels(ks, conf);
     initCFNames(uri);

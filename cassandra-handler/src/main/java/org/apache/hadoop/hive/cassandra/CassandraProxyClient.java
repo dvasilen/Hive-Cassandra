@@ -126,6 +126,10 @@ public class CassandraProxyClient implements java.lang.reflect.InvocationHandler
             .getClassLoader(), Cassandra.Client.class.getInterfaces(), this);
   }
 
+  public CassandraClientHolder getClientHolder() {
+    return clientHolder;
+  }
+
   /**
    * Delegates to close of {@link CassandraClientHolder#close()}
    */

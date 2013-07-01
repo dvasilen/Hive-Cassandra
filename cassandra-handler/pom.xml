@@ -42,8 +42,7 @@
                 <version>2.15</version>
                 <configuration>
                     <includes>
-                        <include>**/CassandraHandlerTestSuite.class</include>
-                        <include>**/CassandraMetastoreTestSuite.class</include>
+                        <include>**/SingleTestSuite.class</include>
                     </includes>
                 </configuration>
             </plugin>
