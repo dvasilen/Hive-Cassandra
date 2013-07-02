@@ -32,12 +32,12 @@ import org.apache.cassandra.io.util.FileUtils;
  * A cleanup utility that wipes the cassandra data directories.
  *
  * @author Ran Tavory (rantav@gmail.com)
- *
  */
 public class CassandraServiceDataCleaner {
 
   /**
    * Creates all data dir if they don't exist and cleans them
+   *
    * @throws IOException
    */
   public void prepare() throws IOException {
@@ -48,15 +48,18 @@ public class CassandraServiceDataCleaner {
 
   /**
    * Deletes all data from cassandra data directories, including the commit log.
+   *
    * @throws IOException in case of permissions error etc.
    */
   public void cleanupDataDirectories() throws IOException {
-    for (String s: getDataDirs()) {
+    for (String s : getDataDirs()) {
       cleanDir(s);
     }
   }
+
   /**
    * Creates the data diurectories, if they didn't exist.
+   *
    * @throws IOException if directories cannot be created (permissions etc).
    */
   public void makeDirsIfNotExist() throws IOException {

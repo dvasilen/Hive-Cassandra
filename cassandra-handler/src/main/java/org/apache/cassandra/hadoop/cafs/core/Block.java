@@ -15,33 +15,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.hadoop.fs;
+package org.apache.cassandra.hadoop.cafs.core;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
-import org.apache.log4j.Logger;
-
-/**
- * Smaller component of a @link {@link org.apache.cassandra.hadoop.fs.Block}.
- */
-public class SubBlock
+public class Block
 {
-    private static Logger logger = Logger.getLogger(SubBlock.class);
-    
+    private static Logger logger = LoggerFactory.getLogger(Block.class);
+
     public final UUID id;
     public final long length;
     public final long offset;
-    
-    public SubBlock(UUID id, long offset, long length)
+    public final SubBlock[] subBlocks;
+
+    public Block(UUID id, long offset, long length, SubBlock[] subBlocks)
     {
         this.id     = id;
         this.offset = offset;
-        this.length = length;        
+        this.length = length;
+        this.subBlocks = subBlocks;
     }
-    
+
     @Override
     public String toString() {
-      return "SubBlock[" + id + ", " + offset + ", "+ length+"]";
+      StringBuilder sb = new StringBuilder("Block[" + id + ", " + offset + ", "+ length + "\n");
+
+      if (subBlocks != null)
+      {
+           for (SubBlock sblock : subBlocks) {
+               sb.append("    " + sblock.toString());
+           }
+      }
+
+      return sb.toString();
     }
 
 }

@@ -15,19 +15,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.hadoop.fs;
-
-import java.io.IOException;
-import java.io.InputStream;
+package org.apache.cassandra.hadoop.cafs.core;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSInputStream;
 import org.apache.hadoop.fs.FileSystem;
 
-public class CassandraInputStream extends FSInputStream
+import java.io.IOException;
+import java.io.InputStream;
+
+public class CaInputStream extends FSInputStream
 {
 
-    private CassandraFileSystemStore store;
+    private CaFileSystemStore       store;
 
     private Block[]                  blocks;
 
@@ -43,13 +43,8 @@ public class CassandraInputStream extends FSInputStream
 
     private FileSystem.Statistics    stats;
 
-    @Deprecated
-    public CassandraInputStream(Configuration conf, CassandraFileSystemStore store, INode inode)
-    {
-        this(conf, store, inode, null);
-    }
 
-    public CassandraInputStream(Configuration conf, CassandraFileSystemStore store, INode inode,
+    public CaInputStream(Configuration conf, CaFileSystemStore store, INode inode,
             FileSystem.Statistics stats)
     {
 
@@ -148,7 +143,7 @@ public class CassandraInputStream extends FSInputStream
 
     private synchronized void blockSeekTo(long target) throws IOException
     {
-    	// Close underlying inputStream when switching to the new subBlock.
+        // Close underlying inputStream when switching to the new subBlock.
         if (this.blockStream != null) {
             this.blockStream.close();
         }
@@ -194,12 +189,12 @@ public class CassandraInputStream extends FSInputStream
         {
             return;
         }
-        
-    	// Close underlying inputStream when switching to the new subBlock.
+
+        // Close underlying inputStream when switching to the new subBlock.
         if (this.blockStream != null) {
             this.blockStream.close();
         }
-       
+
         super.close();
         closed = true;
     }

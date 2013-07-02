@@ -15,22 +15,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.hadoop.fs;
+package org.apache.cassandra.hadoop.cafs.core;
 
+
+import junit.framework.Assert;
+import org.apache.hadoop.fs.permission.FsPermission;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.UUID;
 
-import junit.framework.Assert;
-
-import org.junit.Before;
-import org.junit.Test;
-
-import org.apache.hadoop.fs.permission.FsPermission;
-
 /**
- * Test {@link org.apache.cassandra.hadoop.fs.INode} functionality.
+ * Test {@link INode} functionality.
  *
  */
 public class INodeTest {

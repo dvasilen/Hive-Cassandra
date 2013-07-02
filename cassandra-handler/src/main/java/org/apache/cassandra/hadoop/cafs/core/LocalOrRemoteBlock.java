@@ -1,5 +1,5 @@
 
-package org.apache.cassandra.hadoop.fs;
+package org.apache.cassandra.hadoop.cafs.core;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
 

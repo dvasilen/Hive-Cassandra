@@ -15,13 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.hadoop.fs;
+package org.apache.cassandra.hadoop.cafs.core;
+
+import org.apache.hadoop.fs.permission.FsPermission;
 
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.UUID;
-
-import org.apache.hadoop.fs.permission.FsPermission;
 
 public class INode
 {
@@ -35,18 +35,18 @@ public class INode
     private FileType               fileType;
     public final String            user;
     public final String            group;
-    public final FsPermission      perms;
+    public final FsPermission perms;
     private Block[]                blocks;
     public long mtime = 0;
 
     public INode(String user, String group, FsPermission perms, FileType fileType, Block[] blocks)
     {
-        
+
         this.user = user;
         this.group = group;
         this.perms = perms;
         this.fileType = fileType;
-        
+
         if (isDirectory() && blocks != null)
         {
             throw new IllegalArgumentException("A directory cannot contain blocks.");
@@ -82,7 +82,7 @@ public class INode
 
     public ByteBuffer serialize() throws IOException
     {
-    	// Write INode header
+        // Write INode header
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         DataOutputStream out = new DataOutputStream(bytes);
         out.writeInt(user.getBytes().length);  out.writeBytes(user);
@@ -90,7 +90,7 @@ public class INode
         out.writeShort(perms.toShort());
         out.writeByte(fileType.ordinal());
         if (isFile())
-        {  
+        {
             // Write blocks
             out.writeInt(blocks.length);
             for (int i = 0; i < blocks.length; i++)
@@ -100,7 +100,7 @@ public class INode
 
                 out.writeLong(blocks[i].offset);
                 out.writeLong(blocks[i].length);
-                
+
                 // Write SubBlocks for this block
                 out.writeInt(blocks[i].subBlocks.length);
                 for (SubBlock subb : blocks[i].subBlocks)
@@ -126,13 +126,13 @@ public class INode
         int ulen = dataIn.readInt();
         byte[] ubuf = new byte[ulen];
         dataIn.readFully(ubuf);
-        
+
         int glen = dataIn.readInt();
         byte[] gbuf = new byte[glen];
         dataIn.readFully(gbuf);
-        
+
         FsPermission perms = new FsPermission(dataIn.readShort());
-        
+
         FileType fileType = INode.FILE_TYPES[dataIn.readByte()];
         switch (fileType)
         {
@@ -148,7 +148,7 @@ public class INode
                 long leastSigBits = dataIn.readLong();
                 long offset = dataIn.readLong();
                 long length = dataIn.readLong();
-                
+
                 // Deserialize SubBlocks for this block
                 int numSubBlocks = dataIn.readInt();
                 SubBlock[] subBlocks = new SubBlock[numSubBlocks];
@@ -160,7 +160,7 @@ public class INode
                     long subLength = dataIn.readLong();
                     subBlocks[j] = new SubBlock(new UUID(subMostSigBits,subLeastSigBits), subOffset, subLength);
                 }
-                
+
                 blocks[i] = new Block(new UUID(mostSigBits,leastSigBits), offset, length, subBlocks);
             }
             in.close();

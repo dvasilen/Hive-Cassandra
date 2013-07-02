@@ -3,7 +3,7 @@
  *
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  */
-package org.apache.cassandra.hadoop.fs;
+package org.apache.cassandra.hadoop.cafs.core;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
@@ -20,9 +20,9 @@ public class LocalBlock
   }
 
   public LocalBlock(
-          String file,
-          long offset,
-          long length)
+    String file,
+    long offset,
+    long length)
   {
     this();
     this.file = file;

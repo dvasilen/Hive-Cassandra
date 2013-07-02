@@ -15,32 +15,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.hadoop.hive.metastore;
+package org.apache.cassandra.hadoop.cafs.core;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.UUID;
 
 /**
- * CassandraHiveMetaStore specific exception. Usually the result of
- * communication issues with the cluster.
- * 
+ * Smaller component of a @link {@link Block}.
  */
-public class CassandraHiveMetaStoreException extends RuntimeException
+public class SubBlock
 {
+    private static Logger logger = LoggerFactory.getLogger(SubBlock.class);
 
-    private static final long serialVersionUID = 1L;
+    public final UUID id;
+    public final long length;
+    public final long offset;
 
-    private static final String DEF_MSG = "There was a problem with the Cassandra Hive MetaStore: ";
-
-    public CassandraHiveMetaStoreException()
+    public SubBlock(UUID id, long offset, long length)
     {
-        super(DEF_MSG);
+        this.id     = id;
+        this.offset = offset;
+        this.length = length;
     }
 
-    public CassandraHiveMetaStoreException(String msg)
-    {
-        super(DEF_MSG + msg);
+    @Override
+    public String toString() {
+      return "SubBlock[" + id + ", " + offset + ", "+ length+"]";
     }
 
-    public CassandraHiveMetaStoreException(String msg, Throwable t)
-    {
-        super(DEF_MSG + msg, t);
-    }
 }

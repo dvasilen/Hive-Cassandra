@@ -15,46 +15,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.hadoop.fs;
+package org.apache.cassandra.hadoop.cafs.core;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 /**
  * Inner inputStream for SubBlocks that provides an abstraction to
- * @link {@link org.apache.cassandra.hadoop.fs.CassandraInputStream} to read a flow of data.
- * 
+ * @link {@link CaInputStream} to read a flow of data.
+ *
  *  It handles the SubBlock switch and closes the underlying inputstream.
  *
  */
-public class CassandraSubBlockInputStream extends InputStream {
-	
+public class CaSubBlockInputStream extends InputStream {
+
     private boolean                  closed;
-    
+
     private long                     pos      = 0;
 
     private InputStream              subBlockStream;
-    
+
     private Block                    block;
-    
+
     private long                     subBlockEnd = -1;
 
-	private long byteRangeStart;
+    private long byteRangeStart;
 
-	private CassandraFileSystemThriftStore store;
+    private CaFileSystemThriftStore store;
 
-	public CassandraSubBlockInputStream(CassandraFileSystemThriftStore store, Block block, long byteRangeStart) {
-		this.store = store;
-		this.block = block;
-		this.byteRangeStart = byteRangeStart;
-		pos = byteRangeStart;
-	}
+    public CaSubBlockInputStream(CaFileSystemThriftStore store, Block block, long byteRangeStart) {
+        this.store = store;
+        this.block = block;
+        this.byteRangeStart = byteRangeStart;
+        pos = byteRangeStart;
+    }
 
-	/* (non-Javadoc)
-	 * @see java.io.InputStream#read()
-	 */
-	@Override
-	public synchronized int read() throws IOException {
+    /* (non-Javadoc)
+     * @see java.io.InputStream#read()
+     */
+    @Override
+    public synchronized int read() throws IOException {
         if (closed)
         {
             throw new IOException("Stream closed");
@@ -74,8 +74,8 @@ public class CassandraSubBlockInputStream extends InputStream {
         }
 
         return result;
-	}
-	
+    }
+
     @Override
     public synchronized int read(byte buf[], int off, int len) throws IOException
     {
@@ -87,7 +87,7 @@ public class CassandraSubBlockInputStream extends InputStream {
         {
             if (pos > subBlockEnd)
             {
-            	subBlockSeekTo(pos);
+                subBlockSeekTo(pos);
             }
             int realLen = Math.min(len, (int) (subBlockEnd - pos + 1));
             int result = subBlockStream.read(buf, off, realLen);
@@ -99,10 +99,10 @@ public class CassandraSubBlockInputStream extends InputStream {
         }
         return -1;
     }
-	
+
     private synchronized void subBlockSeekTo(long target) throws IOException
     {
-    	// Close underlying inputStream when switching to the new subBlock.
+        // Close underlying inputStream when switching to the new subBlock.
         if (this.subBlockStream != null) {
             this.subBlockStream.close();
         }
@@ -113,7 +113,7 @@ public class CassandraSubBlockInputStream extends InputStream {
         int targetSubBlock = -1;
         long targetSubBlockStart = 0;
         long targetSubBlockEnd = 0;
-        
+
         for (int i = 0; i < block.subBlocks.length; i++)
         {
             long subBlockLength = block.subBlocks[i].length;
@@ -121,7 +121,7 @@ public class CassandraSubBlockInputStream extends InputStream {
 
             if (target >= targetSubBlockStart && target <= targetSubBlockEnd)
             {
-            	targetSubBlock = i;
+                targetSubBlock = i;
                 break;
             }
             else
@@ -140,7 +140,7 @@ public class CassandraSubBlockInputStream extends InputStream {
         this.subBlockStream = store.retrieveSubBlock(block, block.subBlocks[targetSubBlock], offsetIntoSubBlock);
 
     }
-	
+
     @Override
     public synchronized void close() throws IOException
     {
@@ -148,11 +148,11 @@ public class CassandraSubBlockInputStream extends InputStream {
         {
             return;
         }
-        
+
         if (this.subBlockStream != null) {
             this.subBlockStream.close();
         }
-       
+
         super.close();
         closed = true;
     }
@@ -177,7 +177,7 @@ public class CassandraSubBlockInputStream extends InputStream {
     {
         throw new IOException("Mark not supported");
     }
-    
+
     public synchronized long getPos() throws IOException
     {
         return pos;
