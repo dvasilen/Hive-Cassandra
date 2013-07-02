@@ -11,16 +11,16 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 
 
-public class CassandraClientHolderTest extends TestCase {
+public class CassandraClientHolderTest extends BaseCassandraConnectionTest {
   private final Logger log = LoggerFactory.getLogger(CassandraClientHolderTest.class);
-  private BaseCassandraConnection bcc = BaseCassandraConnection.getInstance();
+  //private BaseCassandraConnection bcc = BaseCassandraConnection.getInstance();
 
   public void testBuildClientHolder() throws Exception {
-    bcc.maybeStartServer();
+    maybeStartServer();
     TSocket socket = new TSocket("127.0.0.1", 9170);
     TTransport trans = new TFramedTransport(socket);
 
-    CassandraClientHolder clientHolder = new CassandraClientHolder(trans, bcc.ksName);
+    CassandraClientHolder clientHolder = new CassandraClientHolder(trans, ksName);
 
     assertEquals("Test Cluster", clientHolder.getClient().describe_cluster_name());
 
@@ -28,10 +28,10 @@ public class CassandraClientHolderTest extends TestCase {
 
   public void testIsOpen() {
     try {
-      bcc.maybeStartServer();
+      maybeStartServer();
       TSocket socket = new TSocket("127.0.0.1", 9170);
       TTransport trans = new TFramedTransport(socket);
-      CassandraClientHolder clientHolder = new CassandraClientHolder(trans, bcc.ksName);
+      CassandraClientHolder clientHolder = new CassandraClientHolder(trans, ksName);
       assertTrue(clientHolder.isOpen());
       clientHolder.close();
       assertFalse(clientHolder.isOpen());
@@ -42,14 +42,14 @@ public class CassandraClientHolderTest extends TestCase {
   }
 
   public void testSetKeyspace() throws Exception {
-    bcc.maybeStartServer();
+    maybeStartServer();
     TSocket socket = new TSocket("127.0.0.1", 9170);
     TTransport trans = new TFramedTransport(socket);
     CassandraClientHolder clientHolder = new CassandraClientHolder(trans);
     assertNull(clientHolder.getKeyspace());
-    clientHolder.setKeyspace(bcc.ksName);
+    clientHolder.setKeyspace(ksName);
     Cassandra.Client client = clientHolder.getClient();
     assertNotNull(client);
-    assertEquals(bcc.ksName, clientHolder.getKeyspace());
+    assertEquals(ksName, clientHolder.getKeyspace());
   }
 }

@@ -40,7 +40,6 @@ import org.apache.cassandra.dht.*;
 import org.apache.cassandra.gms.ApplicationState;
 import org.apache.cassandra.gms.VersionedValue;
 import org.apache.cassandra.service.StorageService;
-import org.apache.cassandra.thrift.IndexExpression;
 import org.apache.cassandra.utils.ByteBufferUtil;
 
 public class Util {
@@ -85,8 +84,7 @@ public class Util {
     return cfs.getRangeSlice(null,
             new Bounds(min, min),
             10000,
-            new IdentityQueryFilter(),
-            new ArrayList<IndexExpression>());
+            new IdentityQueryFilter(), null);
   }
 
   /**
@@ -133,11 +131,11 @@ public class Util {
 
     for (int i = 0; i < endpointTokens.size(); i++) {
       InetAddress ep = InetAddress.getByName("127.0.0." + String.valueOf(i + 1));
+
       List<Token> tokens = new ArrayList<Token>();
       tokens.add(endpointTokens.get(i));
 
-      ss.onChange(ep, ApplicationState.STATUS,
-              new VersionedValue.VersionedValueFactory(partitioner).normal(tokens));
+      ss.onChange(ep, ApplicationState.STATUS, new VersionedValue.VersionedValueFactory(partitioner).normal(tokens));
       hosts.add(ep);
     }
 

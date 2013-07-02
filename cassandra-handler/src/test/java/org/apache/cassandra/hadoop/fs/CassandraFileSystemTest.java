@@ -17,21 +17,8 @@
  */
 package org.apache.cassandra.hadoop.fs;
 
-import org.apache.cassandra.CleanupHelper;
-import org.apache.cassandra.Util;
-import org.apache.cassandra.config.DatabaseDescriptor;
-import org.apache.cassandra.db.Table;
-import org.apache.cassandra.utils.FBUtilities;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.BlockLocation;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hive.cassandra.BaseCassandraConnection;
-import org.apache.hadoop.hive.cassandra.CassandraException;
-import org.apache.thrift.TException;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.*;
 import java.net.URI;
@@ -40,10 +27,29 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Future;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import org.apache.cassandra.CleanupHelper;
+import org.apache.cassandra.EmbeddedServer;
+import org.apache.cassandra.Util;
+import org.apache.cassandra.exceptions.ConfigurationException;
+import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.db.Table;
+import org.apache.cassandra.utils.FBUtilities;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.BlockLocation;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.Path;
+import org.apache.thrift.transport.TTransportException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CassandraFileSystemTest extends CleanupHelper {
+
+  Logger log = LoggerFactory.getLogger(CassandraFileSystemTest.class);
+
   /**
    * Set embedded cassandra up and spawn it in a new thread.
    *
@@ -53,8 +59,8 @@ public class CassandraFileSystemTest extends CleanupHelper {
    * @throws InterruptedException
    */
   @BeforeClass
-  public static void setup() throws TException, CassandraException, IOException {
-    BaseCassandraConnection.getInstance().maybeStartServer();
+  public static void setup() throws TTransportException, IOException, InterruptedException, ConfigurationException {
+    //EmbeddedServer.startCas();
   }
 
 
@@ -71,7 +77,11 @@ public class CassandraFileSystemTest extends CleanupHelper {
   private void testFileSystem(boolean flush) throws Exception {
     CassandraFileSystem fs = new CassandraFileSystem();
 
-    fs.initialize(URI.create("cfs://localhost:" + DatabaseDescriptor.getRpcPort() + "/"), new Configuration());
+    final URI uri = URI.create("cfs://localhost:" + DatabaseDescriptor.getRpcPort() + "/");
+
+    log.debug("CONNECTING TO SERVER @ " + uri.toString());
+
+    fs.initialize(uri, new Configuration());
 
     fs.mkdirs(new Path("/mytestdir"));
     fs.mkdirs(new Path("/mytestdir/sub1"));

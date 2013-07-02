@@ -39,15 +39,6 @@ public class CleanupHelper extends SchemaLoader {
 
   @BeforeClass
   public static void cleanupAndLeaveDirs() throws IOException {
-    File conf = new File("src/test/resources/cassandra.yaml");
-
-    if (!conf.exists()) {
-      throw new RuntimeException("Cassandra configuration not found!");
-      //System.exit(1);
-    }
-
-    System.setProperty("cassandra.config", "file://" + conf.getCanonicalPath());
-
     mkdirs();
     cleanup();
     mkdirs();

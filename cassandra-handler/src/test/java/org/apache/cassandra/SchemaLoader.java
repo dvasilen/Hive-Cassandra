@@ -41,16 +41,6 @@ import org.slf4j.LoggerFactory;
 public class SchemaLoader {
   private static Logger logger = LoggerFactory.getLogger(SchemaLoader.class);
 
-  private static String ks1 = "Keyspace1";
-  private static String ks2 = "Keyspace2";
-  private static String ks3 = "Keyspace3";
-  private static String ks4 = "Keyspace4";
-  private static String ks5 = "Keyspace5";
-  private static String ks6 = "Keyspace6";
-  private static String ks_kcs = "KeyCacheSpace";
-  private static String ks_rcs = "RowCacheSpace";
-  private static String ks_nocommit = "NoCommitlogSpace";
-
   @BeforeClass
   public static void loadSchema() {
     Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
@@ -60,14 +50,7 @@ public class SchemaLoader {
     });
 
     try {
-      Collection<KSMetaData> schemas = schemaDefinition();
-      for (KSMetaData ksmd : schemas) {
-        try {
-          Schema.instance.load(ksmd);
-        } catch (RuntimeException re) {
-          logger.warn("ERROR: ", re);
-        }
-      }
+      Schema.instance.load(schemaDefinition());
     } catch (ConfigurationException e) {
       throw new RuntimeException(e);
     }
@@ -75,6 +58,17 @@ public class SchemaLoader {
 
   public static Collection<KSMetaData> schemaDefinition() throws ConfigurationException {
     List<KSMetaData> schema = new ArrayList<KSMetaData>();
+
+    // A whole bucket of shorthand
+    String ks1 = "Keyspace1";
+    String ks2 = "Keyspace2";
+    String ks3 = "Keyspace3";
+    String ks4 = "Keyspace4";
+    String ks5 = "Keyspace5";
+    String ks6 = "Keyspace6";
+    String ks_kcs = "KeyCacheSpace";
+    String ks_rcs = "RowCacheSpace";
+    String ks_nocommit = "NoCommitlogSpace";
 
     Class<? extends AbstractReplicationStrategy> simple = SimpleStrategy.class;
 
@@ -87,13 +81,7 @@ public class SchemaLoader {
     ColumnFamilyType su = ColumnFamilyType.Super;
     AbstractType bytes = BytesType.instance;
 
-    List<AbstractType<?>> ats = new ArrayList<AbstractType<?>>();
-    ats.add(BytesType.instance);
-    ats.add(TimeUUIDType.instance);
-    ats.add(IntegerType.instance);
-    AbstractType composite = CompositeType.getInstance(ats);
-
-
+    AbstractType composite = CompositeType.getInstance(Arrays.asList(new AbstractType<?>[]{BytesType.instance, TimeUUIDType.instance, IntegerType.instance}));
     Map<Byte, AbstractType<?>> aliases = new HashMap<Byte, AbstractType<?>>();
     aliases.put((byte) 'b', BytesType.instance);
     aliases.put((byte) 't', TimeUUIDType.instance);

@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import junit.framework.TestCase;
 import org.apache.cassandra.config.CFMetaData;
 import org.apache.cassandra.config.KSMetaData;
 import org.apache.cassandra.config.Schema;
@@ -20,7 +21,7 @@ import org.apache.cassandra.thrift.Cassandra;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
-public class BaseCassandraConnectionTest {
+public class BaseCassandraConnectionTest extends TestCase {
 
   protected static CassandraProxyClient client;
   private static EmbeddedCassandraService cassandra;

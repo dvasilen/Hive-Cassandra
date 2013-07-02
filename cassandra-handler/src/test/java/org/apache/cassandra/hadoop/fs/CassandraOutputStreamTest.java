@@ -26,12 +26,10 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import org.apache.hadoop.hive.cassandra.BaseCassandraConnection;
-import org.apache.hadoop.hive.cassandra.CassandraException;
-import org.apache.thrift.TException;
 import org.junit.*;
 
 import org.apache.cassandra.CleanupHelper;
+import org.apache.cassandra.EmbeddedServer;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.BlockLocation;
@@ -57,8 +55,8 @@ public class CassandraOutputStreamTest extends CleanupHelper {
    * @throws InterruptedException
    */
   @BeforeClass
-  public static void setup() throws TException, IOException, InterruptedException, ConfigurationException, CassandraException {
-    BaseCassandraConnection.getInstance().maybeStartServer();
+  public static void setup() throws TTransportException, IOException, InterruptedException, ConfigurationException {
+    EmbeddedServer.startCas();
   }
 
   private CassandraOutputStream out;

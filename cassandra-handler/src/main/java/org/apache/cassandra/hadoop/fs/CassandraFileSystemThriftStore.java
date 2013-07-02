@@ -161,16 +161,11 @@ public class CassandraFileSystemThriftStore implements CassandraFileSystemStore 
     }
     KsDef ks = checkKeyspace();
 
-    logger.debug("GOT KEYSPACE: " + ks);
-
     if (ks == null) {
-      logger.debug("CREATING KEYSPACE: " + ks);
       ks = createKeySpace();
     }
 
     ks = checkKeyspace();
-
-    logger.debug("GOT KEYSPACE: " + ks);
 
     initConsistencyLevels(ks, conf);
     initCFNames(uri);
@@ -277,13 +272,13 @@ public class CassandraFileSystemThriftStore implements CassandraFileSystemStore 
       cf.setColumn_metadata(
               Arrays.asList(new ColumnDef(pathCol, "BytesType").
                       setIndex_type(IndexType.KEYS).
-                      setIndex_name("path"),
+                      setIndex_name("cfs_path_sblock"),
                       new ColumnDef(sentCol, "BytesType").
                               setIndex_type(IndexType.KEYS).
-                              setIndex_name("sentinel"),
+                              setIndex_name("cfs_sentinel_sblock"),
                       new ColumnDef(parentPathCol, "BytesType").
                               setIndex_type(IndexType.KEYS).
-                              setIndex_name("parent_path")));
+                              setIndex_name("cfs_parent_path_001")));
 
       cfs.add(cf);
 
@@ -314,13 +309,13 @@ public class CassandraFileSystemThriftStore implements CassandraFileSystemStore 
       cf.setColumn_metadata(
               Arrays.asList(new ColumnDef(pathCol, "BytesType").
                       setIndex_type(IndexType.KEYS).
-                      setIndex_name("path"),
+                      setIndex_name("cfs_path_sblockarchive"),
                       new ColumnDef(sentCol, "BytesType").
                               setIndex_type(IndexType.KEYS).
-                              setIndex_name("sentinel"),
+                              setIndex_name("cfs_sentinel_sblockarchive"),
                       new ColumnDef(parentPathCol, "BytesType").
                               setIndex_type(IndexType.KEYS).
-                              setIndex_name("parent_path")));
+                              setIndex_name("cfs_parent_path_002")));
 
       cfs.add(cf);
 
@@ -459,13 +454,21 @@ public class CassandraFileSystemThriftStore implements CassandraFileSystemStore 
 
   public INode retrieveINode(Path path) throws IOException {
     ByteBuffer pathKey = getPathKey(path);
-    ColumnOrSuperColumn pathInfo;
+    ColumnOrSuperColumn pathInfo = null;
 
-    pathInfo = performGet(pathKey, inodeDataPath, consistencyLevelRead);
+    try {
+      pathInfo = performGet(pathKey, inodeDataPath, consistencyLevelRead);
+    } catch (IOException e) {
+      logger.warn("Could not performGet with CL=ONE, will try QOURUM");
+    }
 
     // If not found and I already tried with CL= ONE, retry with higher CL.
     if (pathInfo == null && consistencyLevelRead.equals(ConsistencyLevel.ONE)) {
-      pathInfo = performGet(pathKey, inodeDataPath, ConsistencyLevel.QUORUM);
+      try {
+        pathInfo = performGet(pathKey, inodeDataPath, ConsistencyLevel.QUORUM);
+      } catch (IOException e) {
+        logger.warn("UNABLE to performGet: ", e);
+      }
     }
 
     if (pathInfo == null) {
