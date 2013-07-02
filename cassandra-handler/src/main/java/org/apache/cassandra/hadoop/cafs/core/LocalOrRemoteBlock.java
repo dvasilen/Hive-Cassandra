@@ -5,8 +5,7 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 
 import java.nio.ByteBuffer;
 
-public class LocalOrRemoteBlock  
-{
+public class LocalOrRemoteBlock {
 
   public ByteBuffer remote_block;
   public LocalBlock local_block;
@@ -20,7 +19,7 @@ public class LocalOrRemoteBlock
   public LocalOrRemoteBlock(LocalOrRemoteBlock other) {
     if (other.isSetRemote_block()) {
       this.remote_block = org.apache.thrift.TBaseHelper.copyBinary(other.remote_block);
-;
+      ;
     }
     if (other.isSetLocal_block()) {
       this.local_block = new LocalBlock(other.local_block);
@@ -47,7 +46,7 @@ public class LocalOrRemoteBlock
   }
 
   public LocalOrRemoteBlock setRemote_block(byte[] remote_block) {
-    setRemote_block(remote_block == null ? (ByteBuffer)null : ByteBuffer.wrap(remote_block));
+    setRemote_block(remote_block == null ? (ByteBuffer) null : ByteBuffer.wrap(remote_block));
     return this;
   }
 
@@ -60,7 +59,9 @@ public class LocalOrRemoteBlock
     this.remote_block = null;
   }
 
-  /** Returns true if field remote_block is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field remote_block is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetRemote_block() {
     return this.remote_block != null;
   }
@@ -84,7 +85,9 @@ public class LocalOrRemoteBlock
     this.local_block = null;
   }
 
-  /** Returns true if field local_block is set (has been assigned a value) and false otherwise */
+  /**
+   * Returns true if field local_block is set (has been assigned a value) and false otherwise
+   */
   public boolean isSetLocal_block() {
     return this.local_block != null;
   }
@@ -96,13 +99,12 @@ public class LocalOrRemoteBlock
   }
 
 
-
   @Override
   public boolean equals(Object that) {
     if (that == null)
       return false;
     if (that instanceof LocalOrRemoteBlock)
-      return this.equals((LocalOrRemoteBlock)that);
+      return this.equals((LocalOrRemoteBlock) that);
     return false;
   }
 
@@ -154,7 +156,7 @@ public class LocalOrRemoteBlock
     }
 
     int lastComparison = 0;
-    LocalOrRemoteBlock typedOther = (LocalOrRemoteBlock)other;
+    LocalOrRemoteBlock typedOther = (LocalOrRemoteBlock) other;
 
     lastComparison = Boolean.valueOf(isSetRemote_block()).compareTo(typedOther.isSetRemote_block());
     if (lastComparison != 0) {
@@ -178,7 +180,6 @@ public class LocalOrRemoteBlock
     }
     return 0;
   }
-
 
 
   @Override
@@ -208,7 +209,6 @@ public class LocalOrRemoteBlock
     sb.append(")");
     return sb.toString();
   }
-
 
 
 }

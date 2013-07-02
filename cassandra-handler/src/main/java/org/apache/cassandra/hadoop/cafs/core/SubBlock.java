@@ -25,24 +25,22 @@ import java.util.UUID;
 /**
  * Smaller component of a @link {@link Block}.
  */
-public class SubBlock
-{
-    private static Logger logger = LoggerFactory.getLogger(SubBlock.class);
+public class SubBlock {
+  private static Logger logger = LoggerFactory.getLogger(SubBlock.class);
 
-    public final UUID id;
-    public final long length;
-    public final long offset;
+  public final UUID id;
+  public final long length;
+  public final long offset;
 
-    public SubBlock(UUID id, long offset, long length)
-    {
-        this.id     = id;
-        this.offset = offset;
-        this.length = length;
-    }
+  public SubBlock(UUID id, long offset, long length) {
+    this.id = id;
+    this.offset = offset;
+    this.length = length;
+  }
 
-    @Override
-    public String toString() {
-      return "SubBlock[" + id + ", " + offset + ", "+ length+"]";
-    }
+  @Override
+  public String toString() {
+    return "SubBlock[" + id + ", " + offset + ", " + length + "]";
+  }
 
 }

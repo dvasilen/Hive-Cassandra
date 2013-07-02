@@ -24,199 +24,168 @@ import org.apache.hadoop.fs.FileSystem;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class CaInputStream extends FSInputStream
-{
+public class CaInputStream extends FSInputStream {
 
-    private CaFileSystemStore       store;
+  private CaFileSystemStore store;
 
-    private Block[]                  blocks;
+  private Block[] blocks;
 
-    private boolean                  closed;
+  private boolean closed;
 
-    private long                     fileLength;
+  private long fileLength;
 
-    private long                     pos      = 0;
+  private long pos = 0;
 
-    private InputStream              blockStream;
+  private InputStream blockStream;
 
-    private long                     blockEnd = -1;
+  private long blockEnd = -1;
 
-    private FileSystem.Statistics    stats;
+  private FileSystem.Statistics stats;
 
 
-    public CaInputStream(Configuration conf, CaFileSystemStore store, INode inode,
-            FileSystem.Statistics stats)
-    {
+  public CaInputStream(Configuration conf, CaFileSystemStore store, INode inode,
+                       FileSystem.Statistics stats) {
 
-        this.store = store;
-        this.stats = stats;
-        this.blocks = inode.getBlocks();
-        for (Block block : blocks)
-        {
-            this.fileLength += block.length;
-        }
+    this.store = store;
+    this.stats = stats;
+    this.blocks = inode.getBlocks();
+    for (Block block : blocks) {
+      this.fileLength += block.length;
+    }
+  }
+
+  @Override
+  public synchronized long getPos() throws IOException {
+    return pos;
+  }
+
+  @Override
+  public synchronized int available() throws IOException {
+    return (int) (fileLength - pos);
+  }
+
+  @Override
+  public synchronized void seek(long targetPos) throws IOException {
+    if (targetPos > fileLength) {
+      throw new IOException("Cannot seek after EOF");
+    }
+    pos = targetPos;
+    blockEnd = -1;
+  }
+
+  @Override
+  public synchronized boolean seekToNewSource(long targetPos) throws IOException {
+    return false;
+  }
+
+  @Override
+  public synchronized int read() throws IOException {
+    if (closed) {
+      throw new IOException("Stream closed");
+    }
+    int result = -1;
+    if (pos < fileLength) {
+      if (pos > blockEnd) {
+        blockSeekTo(pos);
+      }
+      result = blockStream.read();
+      if (result >= 0) {
+        pos++;
+      }
+    }
+    if (stats != null & result >= 0) {
+      stats.incrementBytesRead(1);
+    }
+    return result;
+  }
+
+  @Override
+  public synchronized int read(byte buf[], int off, int len) throws IOException {
+    if (closed) {
+      throw new IOException("Stream closed");
+    }
+    if (pos < fileLength) {
+      if (pos > blockEnd) {
+        blockSeekTo(pos);
+      }
+      int realLen = Math.min(len, (int) (blockEnd - pos + 1));
+      int result = blockStream.read(buf, off, realLen);
+      if (result >= 0) {
+        pos += result;
+      }
+      if (stats != null && result > 0) {
+        stats.incrementBytesRead(result);
+      }
+      return result;
+    }
+    return -1;
+  }
+
+  private synchronized void blockSeekTo(long target) throws IOException {
+    // Close underlying inputStream when switching to the new subBlock.
+    if (this.blockStream != null) {
+      this.blockStream.close();
+    }
+    //
+    // Compute desired block
+    //
+    int targetBlock = -1;
+    long targetBlockStart = 0;
+    long targetBlockEnd = 0;
+    for (int i = 0; i < blocks.length; i++) {
+      long blockLength = blocks[i].length;
+      targetBlockEnd = targetBlockStart + blockLength - 1;
+
+      if (target >= targetBlockStart && target <= targetBlockEnd) {
+        targetBlock = i;
+        break;
+      } else {
+        targetBlockStart = targetBlockEnd + 1;
+      }
+    }
+    if (targetBlock < 0) {
+      throw new IOException("Impossible situation: could not find target position " + target);
+    }
+    long offsetIntoBlock = target - targetBlockStart;
+
+    // read block blocks[targetBlock] from position offsetIntoBlock
+
+    this.pos = target;
+    this.blockEnd = targetBlockEnd;
+    this.blockStream = store.retrieveBlock(blocks[targetBlock], offsetIntoBlock);
+
+  }
+
+  @Override
+  public void close() throws IOException {
+    if (closed) {
+      return;
     }
 
-    @Override
-    public synchronized long getPos() throws IOException
-    {
-        return pos;
+    // Close underlying inputStream when switching to the new subBlock.
+    if (this.blockStream != null) {
+      this.blockStream.close();
     }
 
-    @Override
-    public synchronized int available() throws IOException
-    {
-        return (int) (fileLength - pos);
-    }
+    super.close();
+    closed = true;
+  }
 
-    @Override
-    public synchronized void seek(long targetPos) throws IOException
-    {
-        if (targetPos > fileLength)
-        {
-            throw new IOException("Cannot seek after EOF");
-        }
-        pos = targetPos;
-        blockEnd = -1;
-    }
+  /**
+   * We don't support marks.
+   */
+  @Override
+  public boolean markSupported() {
+    return false;
+  }
 
-    @Override
-    public synchronized boolean seekToNewSource(long targetPos) throws IOException
-    {
-        return false;
-    }
+  @Override
+  public void mark(int readLimit) {
+    // Do nothing
+  }
 
-    @Override
-    public synchronized int read() throws IOException
-    {
-        if (closed)
-        {
-            throw new IOException("Stream closed");
-        }
-        int result = -1;
-        if (pos < fileLength)
-        {
-            if (pos > blockEnd)
-            {
-                blockSeekTo(pos);
-            }
-            result = blockStream.read();
-            if (result >= 0)
-            {
-                pos++;
-            }
-        }
-        if (stats != null & result >= 0)
-        {
-            stats.incrementBytesRead(1);
-        }
-        return result;
-    }
-
-    @Override
-    public synchronized int read(byte buf[], int off, int len) throws IOException
-    {
-        if (closed)
-        {
-            throw new IOException("Stream closed");
-        }
-        if (pos < fileLength)
-        {
-            if (pos > blockEnd)
-            {
-                blockSeekTo(pos);
-            }
-            int realLen = Math.min(len, (int) (blockEnd - pos + 1));
-            int result = blockStream.read(buf, off, realLen);
-            if (result >= 0)
-            {
-                pos += result;
-            }
-            if (stats != null && result > 0)
-            {
-                stats.incrementBytesRead(result);
-            }
-            return result;
-        }
-        return -1;
-    }
-
-    private synchronized void blockSeekTo(long target) throws IOException
-    {
-        // Close underlying inputStream when switching to the new subBlock.
-        if (this.blockStream != null) {
-            this.blockStream.close();
-        }
-        //
-        // Compute desired block
-        //
-        int targetBlock = -1;
-        long targetBlockStart = 0;
-        long targetBlockEnd = 0;
-        for (int i = 0; i < blocks.length; i++)
-        {
-            long blockLength = blocks[i].length;
-            targetBlockEnd = targetBlockStart + blockLength - 1;
-
-            if (target >= targetBlockStart && target <= targetBlockEnd)
-            {
-                targetBlock = i;
-                break;
-            }
-            else
-            {
-                targetBlockStart = targetBlockEnd + 1;
-            }
-        }
-        if (targetBlock < 0)
-        {
-            throw new IOException("Impossible situation: could not find target position " + target);
-        }
-        long offsetIntoBlock = target - targetBlockStart;
-
-        // read block blocks[targetBlock] from position offsetIntoBlock
-
-        this.pos = target;
-        this.blockEnd = targetBlockEnd;
-        this.blockStream = store.retrieveBlock(blocks[targetBlock], offsetIntoBlock);
-
-    }
-
-    @Override
-    public void close() throws IOException
-    {
-        if (closed)
-        {
-            return;
-        }
-
-        // Close underlying inputStream when switching to the new subBlock.
-        if (this.blockStream != null) {
-            this.blockStream.close();
-        }
-
-        super.close();
-        closed = true;
-    }
-
-    /**
-     * We don't support marks.
-     */
-    @Override
-    public boolean markSupported()
-    {
-        return false;
-    }
-
-    @Override
-    public void mark(int readLimit)
-    {
-        // Do nothing
-    }
-
-    @Override
-    public void reset() throws IOException
-    {
-        throw new IOException("Mark not supported");
-    }
+  @Override
+  public void reset() throws IOException {
+    throw new IOException("Mark not supported");
+  }
 }

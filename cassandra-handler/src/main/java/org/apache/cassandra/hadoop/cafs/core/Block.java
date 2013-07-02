@@ -22,35 +22,32 @@ import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
-public class Block
-{
-    private static Logger logger = LoggerFactory.getLogger(Block.class);
+public class Block {
+  private static Logger logger = LoggerFactory.getLogger(Block.class);
 
-    public final UUID id;
-    public final long length;
-    public final long offset;
-    public final SubBlock[] subBlocks;
+  public final UUID id;
+  public final long length;
+  public final long offset;
+  public final SubBlock[] subBlocks;
 
-    public Block(UUID id, long offset, long length, SubBlock[] subBlocks)
-    {
-        this.id     = id;
-        this.offset = offset;
-        this.length = length;
-        this.subBlocks = subBlocks;
-    }
+  public Block(UUID id, long offset, long length, SubBlock[] subBlocks) {
+    this.id = id;
+    this.offset = offset;
+    this.length = length;
+    this.subBlocks = subBlocks;
+  }
 
-    @Override
-    public String toString() {
-      StringBuilder sb = new StringBuilder("Block[" + id + ", " + offset + ", "+ length + "\n");
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder("Block[" + id + ", " + offset + ", " + length + "\n");
 
-      if (subBlocks != null)
-      {
-           for (SubBlock sblock : subBlocks) {
-               sb.append("    " + sblock.toString());
-           }
+    if (subBlocks != null) {
+      for (SubBlock sblock : subBlocks) {
+        sb.append("    " + sblock.toString());
       }
-
-      return sb.toString();
     }
+
+    return sb.toString();
+  }
 
 }
