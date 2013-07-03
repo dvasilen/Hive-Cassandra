@@ -38,7 +38,7 @@ public class BaseCassandraConnectionTest extends TestCase {
    */
   protected void maybeStartServer() throws IOException, TTransportException, TException, CassandraException {
 
-    File conf = new File("src/test/resources/cassandra.yaml");
+    File conf = new File("conf/cassandra.yaml");
 
     if (!conf.exists()) {
       throw new RuntimeException("Cassandra configuration not found!");

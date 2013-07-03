@@ -89,7 +89,7 @@ public class CassandraStorageHandler
     {
       jobProperties.put(AbstractColumnSerDe.CASSANDRA_PARTITIONER,
           tableProperties.getProperty(AbstractColumnSerDe.CASSANDRA_PARTITIONER,
-          "org.apache.cassandra.dht.RandomPartitioner"));
+          "org.apache.cassandra.dht.Murmur3Partitioner"));
     }
     else
     {
