@@ -1,26 +1,25 @@
-package org.apache.hadoop.hive.cassandra;
+package org.apache.hadoop.hive.cassandra.cql;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-
-import org.apache.cassandra.thrift.CfDef;
-import org.apache.cassandra.thrift.InvalidRequestException;
-import org.apache.cassandra.thrift.KsDef;
-import org.apache.cassandra.thrift.NotFoundException;
-import org.apache.cassandra.thrift.SchemaDisagreementException;
+import org.apache.cassandra.thrift.*;
+import org.apache.cassandra.utils.ByteBufferUtil;
+import org.apache.hadoop.hive.cassandra.CassandraClientHolder;
+import org.apache.hadoop.hive.cassandra.CassandraException;
+import org.apache.hadoop.hive.cassandra.CassandraProxyClient;
 import org.apache.hadoop.hive.cassandra.serde.AbstractColumnSerDe;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.thrift.TException;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * A class to handle the transaction to cassandra backend database.
- *
  */
-public class CassandraManager {
+public class CqlManager {
   final static public int DEFAULT_REPLICATION_FACTOR = 1;
   final static public String DEFAULT_STRATEGY = "org.apache.cassandra.locator.SimpleStrategy";
 
@@ -31,7 +30,7 @@ public class CassandraManager {
   private final int port;
 
   //Cassandra proxy client
-  private CassandraProxyClient clientHolder;
+  private CassandraClientHolder cch;
 
   //Whether or not use framed connection
   private boolean framedConnection;
@@ -48,7 +47,7 @@ public class CassandraManager {
   /**
    * Construct a cassandra manager object from meta table object.
    */
-  public CassandraManager(Table tbl) throws MetaException {
+  public CqlManager(Table tbl) throws MetaException {
     Map<String, String> serdeParam = tbl.getSd().getSerdeInfo().getParameters();
 
     String cassandraHost = serdeParam.get(AbstractColumnSerDe.CASSANDRA_HOST);
@@ -86,7 +85,7 @@ public class CassandraManager {
    */
   public void openConnection() throws MetaException {
     try {
-      clientHolder =  new CassandraProxyClient(host, port, framedConnection, true);
+      cch = new CassandraProxyClient(host, port, framedConnection, true).getClientHolder();
     } catch (CassandraException e) {
       throw new MetaException("Unable to connect to the server " + e.getMessage());
     }
@@ -94,43 +93,11 @@ public class CassandraManager {
 
   /**
    * Close connection to the cassandra server.
-   *
    */
   public void closeConnection() {
-    if (clientHolder != null) {
-      clientHolder.close();
+    if (cch != null) {
+      cch.close();
     }
-  }
-
-  /**
-   * Return a keyspace description for the given keyspace name from the cassandra host.
-   *
-   * @return keyspace description
-   */
-  public KsDef getKeyspaceDesc()
-    throws NotFoundException, MetaException {
-    try {
-      return clientHolder.getProxyConnection().describe_keyspace(keyspace);
-    } catch (TException e) {
-      throw new MetaException("An internal exception prevented this action from taking place."
-          + e.getMessage());
-    } catch (InvalidRequestException e) {
-      throw new MetaException("An internal exception prevented this action from taking place."
-          + e.getMessage());
-    }
-  }
-
-  /**
-   * Get Column family based on the configuration in the table. If nothing is found, return null.
-   */
-  private CfDef getColumnFamily(KsDef ks) {
-    for (CfDef cf : ks.getCf_defs()) {
-      if (cf.getName().equalsIgnoreCase(columnFamilyName)) {
-        return cf;
-      }
-    }
-
-    return null;
   }
 
   /**
@@ -150,7 +117,7 @@ public class CassandraManager {
    * Create a keyspace with columns defined in the table.
    */
   public KsDef createKeyspaceWithColumns()
-    throws MetaException {
+          throws MetaException {
     try {
       KsDef ks = new KsDef();
       ks.setName(getCassandraKeyspace());
@@ -158,40 +125,80 @@ public class CassandraManager {
 
       if (!ks.isSetStrategy_options())
         ks.setStrategy_options(new HashMap<String, String>());
-      
+
       ks.putToStrategy_options("replication_factor", Integer.toString(getReplicationFactor()));
-    
+
       ks.addToCf_defs(getCfDef());
 
-      clientHolder.getProxyConnection().system_add_keyspace(ks);
-      clientHolder.getProxyConnection().set_keyspace(keyspace);
+      cch.getClient().system_add_keyspace(ks);
+      cch.getClient().set_keyspace(keyspace);
       return ks;
     } catch (TException e) {
       throw new MetaException("Unable to create key space '" + keyspace + "'. Error:"
-          + e.getMessage());
+              + e.getMessage());
     } catch (InvalidRequestException e) {
       throw new MetaException("Unable to create key space '" + keyspace + "'. Error:"
-          + e.getMessage());
+              + e.getMessage());
     } catch (SchemaDisagreementException e) {
       throw new MetaException("Unable to create key space '" + keyspace + "'. Error:"
-          + e.getMessage());
+              + e.getMessage());
     }
 
   }
 
   /**
    * Create the column family if it doesn't exist.
-   * @param ks
+   *
    * @return
    * @throws MetaException
    */
-  public CfDef createCFIfNotFound(KsDef ks) throws MetaException {
-    CfDef cf = getColumnFamily(ks);
-    if (cf == null) {
-      return createColumnFamily();
+  public boolean createCFIfNotFound() throws MetaException {
+    boolean cfExists = checkColumnFamily();
+
+    if (!cfExists) {
+      return (createColumnFamily() != null);
     } else {
-      return cf;
+      return cfExists;
     }
+  }
+
+  private boolean checkColumnFamily() throws MetaException {
+    boolean cfExists = false;
+
+    String getCFQuery = "select columnfamily_name from system.schema_columnfamilies where keyspace_name='%s';";
+    String finalQuery = String.format(getCFQuery, keyspace);
+    try {
+      CqlResult colFamilies = cch.getClient().execute_cql3_query(ByteBufferUtil.bytes(finalQuery), Compression.NONE, ConsistencyLevel.ONE);
+      List<CqlRow> rows = colFamilies.getRows();
+
+      for (CqlRow row : rows) {
+        String cfName = new String(row.columns.get(0).getValue());
+        if (cfName.equalsIgnoreCase(cfName)) {
+          cfExists = true;
+        }
+      }
+    } catch (UnavailableException e) {
+      MetaException me = new MetaException(e.getMessage());
+      me.setStackTrace(e.getStackTrace());
+      throw me;
+    } catch (TException e) {
+      MetaException me = new MetaException(e.getMessage());
+      me.setStackTrace(e.getStackTrace());
+      throw me;
+    } catch (InvalidRequestException e) {
+      MetaException me = new MetaException(e.getMessage());
+      me.setStackTrace(e.getStackTrace());
+      throw me;
+    } catch (TimedOutException e) {
+      MetaException me = new MetaException(e.getMessage());
+      me.setStackTrace(e.getStackTrace());
+      throw me;
+    } catch (SchemaDisagreementException e) {
+      MetaException me = new MetaException(e.getMessage());
+      me.setStackTrace(e.getStackTrace());
+      throw me;
+    }
+    return cfExists;
   }
 
   /**
@@ -200,18 +207,18 @@ public class CassandraManager {
   public CfDef createColumnFamily() throws MetaException {
     CfDef cf = getCfDef();
     try {
-      clientHolder.getProxyConnection().set_keyspace(keyspace);
-      clientHolder.getProxyConnection().system_add_column_family(cf);
+      cch.getClient().set_keyspace(keyspace);
+      cch.getClient().system_add_column_family(cf);
       return cf;
     } catch (TException e) {
       throw new MetaException("Unable to create column family '" + columnFamilyName + "'. Error:"
-          + e.getMessage());
+              + e.getMessage());
     } catch (InvalidRequestException e) {
       throw new MetaException("Unable to create column family '" + columnFamilyName + "'. Error:"
-          + e.getMessage());
+              + e.getMessage());
     } catch (SchemaDisagreementException e) {
       throw new MetaException("Unable to create column family '" + columnFamilyName + "'. Error:"
-          + e.getMessage());
+              + e.getMessage());
     }
 
   }
@@ -223,7 +230,7 @@ public class CassandraManager {
       mapping = AbstractColumnSerDe.parseColumnMapping(prop);
     } else {
       List<FieldSchema> schema = tbl.getSd().getCols();
-      if (schema.size() ==0) {
+      if (schema.size() == 0) {
         throw new MetaException("Can't find table column definitions");
       }
 
@@ -243,9 +250,9 @@ public class CassandraManager {
 
     for (String column : mapping) {
       if (column.equalsIgnoreCase(AbstractColumnSerDe.CASSANDRA_KEY_COLUMN)) {
-          hasKey = true;
+        hasKey = true;
       } else if (column.equalsIgnoreCase(AbstractColumnSerDe.CASSANDRA_COLUMN_COLUMN)) {
-          hasColumn = true;
+        hasColumn = true;
       } else if (column.equalsIgnoreCase(AbstractColumnSerDe.CASSANDRA_SUBCOLUMN_COLUMN)) {
         hasSubColumn = true;
       } else if (column.equalsIgnoreCase(AbstractColumnSerDe.CASSANDRA_VALUE_COLUMN)) {
@@ -268,6 +275,7 @@ public class CassandraManager {
 
   /**
    * Get replication factor from the table property.
+   *
    * @return replication factor
    * @throws MetaException error
    */
@@ -353,16 +361,16 @@ public class CassandraManager {
    */
   public void dropTable() throws MetaException {
     try {
-      clientHolder.getProxyConnection().system_drop_column_family(columnFamilyName);
+      cch.getClient().system_drop_column_family(columnFamilyName);
     } catch (TException e) {
       throw new MetaException("Unable to drop column family '" + columnFamilyName + "'. Error:"
-          + e.getMessage());
+              + e.getMessage());
     } catch (InvalidRequestException e) {
       throw new MetaException("Unable to drop column family '" + columnFamilyName + "'. Error:"
-          + e.getMessage());
+              + e.getMessage());
     } catch (SchemaDisagreementException e) {
       throw new MetaException("Unable to drop column family '" + columnFamilyName + "'. Error:"
-          + e.getMessage());
+              + e.getMessage());
     }
   }
 
