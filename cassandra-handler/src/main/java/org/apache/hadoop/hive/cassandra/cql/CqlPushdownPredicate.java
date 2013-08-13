@@ -74,7 +74,8 @@ public class CqlPushdownPredicate {
       List<CqlRow> cfColumns = result.getRows();
 
       for (CqlRow cfColumn : cfColumns) {
-        if (cfColumn.columns.get(2).isSetValue()) {
+          //each row(cfColumn) in the returned result has index_name and validator at index 1,2.
+        if (cfColumn.columns.get(1).isSetValue() && cfColumn.columns.get(2).isSetValue()) {
           ColumnDef cd = new ColumnDef();
           cd.setName(cfColumn.columns.get(1).value);
           cd.setValidation_class(ByteBufferUtil.string(cfColumn.columns.get(2).value));
