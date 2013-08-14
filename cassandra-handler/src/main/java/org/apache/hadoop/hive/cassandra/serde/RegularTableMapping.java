@@ -21,6 +21,13 @@ public class RegularTableMapping extends TableMapping {
     super(colFamily, columnNames, serdeParams);
   }
 
+    public RegularTableMapping(
+            String colFamily,
+            List<String> columnNames,
+            SerDeParameters serdeParams, int iKey) {
+        super(colFamily, columnNames, serdeParams, iKey);
+    }
+
   @Override
   public Writable write(
       byte[] keyBytes,

@@ -341,7 +341,7 @@ public abstract class AbstractCqlSerDe implements SerDe {
    *
    */
   protected void setTableMapping() throws SerDeException {
-    mapping = new RegularTableMapping(cassandraColumnFamily, cassandraColumnNames, serdeParams);
+    mapping = new RegularTableMapping(cassandraColumnFamily, cassandraColumnNames, serdeParams, iKey);
   }
 
   /**

@@ -173,7 +173,7 @@ public class CqlManager {
 
       for (CqlRow row : rows) {
         String cfName = new String(row.columns.get(0).getValue());
-        if (cfName.equalsIgnoreCase(cfName)) {
+        if (columnFamilyName.equalsIgnoreCase(cfName)) {
           cfExists = true;
         }
       }

@@ -53,6 +53,17 @@ public abstract class TableMapping {
     needsEscape = serdeParams.getNeedsEscape();
   }
 
+    TableMapping(String colFamily, List<String> columnNames, SerDeParameters serdeParams, int iKey) {
+        this.cassandraColumnFamily = colFamily;
+        this.cassandraColumnNames = columnNames;
+        this.iKey = iKey;
+
+        separators = serdeParams.getSeparators();
+        escaped = serdeParams.isEscaped();
+        escapeChar = serdeParams.getEscapeChar();
+        needsEscape = serdeParams.getNeedsEscape();
+    }
+
   public Writable getWritable(
       List<? extends StructField> fields,
       List<Object> list,
