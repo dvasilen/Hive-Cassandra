@@ -42,7 +42,7 @@ public abstract class TableMapping {
   private final boolean[] needsEscape; // which chars need to be escaped. This array should have size
 
 
-  TableMapping(String colFamily, List<String> columnNames, SerDeParameters serdeParams) {
+  protected TableMapping(String colFamily, List<String> columnNames, SerDeParameters serdeParams) {
     this.cassandraColumnFamily = colFamily;
     this.cassandraColumnNames = columnNames;
     this.iKey = cassandraColumnNames.indexOf(AbstractColumnSerDe.CASSANDRA_KEY_COLUMN);
@@ -53,7 +53,7 @@ public abstract class TableMapping {
     needsEscape = serdeParams.getNeedsEscape();
   }
 
-    TableMapping(String colFamily, List<String> columnNames, SerDeParameters serdeParams, int iKey) {
+    protected TableMapping(String colFamily, List<String> columnNames, SerDeParameters serdeParams, int iKey) {
         this.cassandraColumnFamily = colFamily;
         this.cassandraColumnNames = columnNames;
         this.iKey = iKey;
