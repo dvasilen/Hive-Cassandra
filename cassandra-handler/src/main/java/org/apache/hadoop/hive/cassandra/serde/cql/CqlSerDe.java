@@ -51,14 +51,7 @@ public class CqlSerDe extends AbstractCqlSerDe {
       cassandraColumnNamesText.add(new Text(columnName));
     }
 
-      String prop = tbl.getProperty(CASSANDRA_COL_MAPPING);
-
-      if (prop != null) {
-          iKey = cassandraColumnNames.indexOf(AbstractCqlSerDe.CASSANDRA_KEY_COLUMN);
-      }else{
-          //default first column is considered as key column.
-          iKey = 0;
-      }
+    iKey = parseIndexOfKeyColumn(tbl);
 
     serdeParams = LazySimpleSerDe.initSerdeParams(job, tbl, serdeName);
 
