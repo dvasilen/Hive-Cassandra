@@ -4,20 +4,16 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import org.apache.cassandra.thrift.Column;
-import org.apache.cassandra.thrift.ColumnOrSuperColumn;
-import org.apache.cassandra.thrift.ConsistencyLevel;
-import org.apache.cassandra.thrift.Mutation;
+import org.apache.cassandra.thrift.*;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.hadoop.hive.cassandra.CassandraProxyClient;
 import org.apache.hadoop.hive.cassandra.output.CassandraAbstractPut;
+import org.apache.hadoop.hive.cassandra.serde.cql.AbstractCqlSerDe;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.thrift.TException;
 
 /**
  * This represents a standard column family. It implements hadoop Writable interface.
@@ -94,49 +90,44 @@ public class CqlPut extends CassandraAbstractPut implements Writable {
   @Override
   public void write(String keySpace, CassandraProxyClient client, JobConf jc) throws IOException {
     ConsistencyLevel flevel = getConsistencyLevel(jc);
-    int batchMutation = getBatchMutationSize(jc);
-    Map<ByteBuffer, Map<String, List<Mutation>>> mutation_map = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();
 
-    Map<String, List<Mutation>> maps = new HashMap<String, List<Mutation>>();
+      List<ByteBuffer> values = new ArrayList<ByteBuffer>();
 
-    int count = 0;
-    // TODO check for counter
-    for (CqlColumn col : columns) {
-      Column cassCol = new Column();
-      cassCol.setValue(col.getValue());
-      cassCol.setTimestamp(col.getTimeStamp());
-      cassCol.setName(col.getColumn());
-
-      ColumnOrSuperColumn thisCol = new ColumnOrSuperColumn();
-      thisCol.setColumn(cassCol);
-
-      Mutation mutation = new Mutation();
-      mutation.setColumn_or_supercolumn(thisCol);
-
-      List<Mutation> mutList = maps.get(col.getColumnFamily());
-      if (mutList == null) {
-        mutList = new ArrayList<Mutation>();
-        maps.put(col.getColumnFamily(), mutList);
+      StringBuilder valuesBuilder = new StringBuilder(" VALUES (");
+      StringBuilder queryBuilder = new StringBuilder("INSERT INTO ");
+      queryBuilder.append(jc.get(AbstractCqlSerDe.CASSANDRA_CF_NAME));
+      queryBuilder.append("(");
+      Iterator<CqlColumn> iter = columns.iterator();
+      while (iter.hasNext()){
+          CqlColumn column = iter.next();
+          String columnName = new String(column.getColumn());
+          queryBuilder.append(columnName);
+          valuesBuilder.append("?");
+          values.add(ByteBuffer.wrap(column.getValue()));
+          if(iter.hasNext()){
+              queryBuilder.append(",");
+              valuesBuilder.append(",");
+          }
       }
+      queryBuilder.append(")");
+      valuesBuilder.append(")");
 
-      mutList.add(mutation);
-      count++;
+      queryBuilder.append(valuesBuilder);
 
-      if (count == batchMutation) {
-        mutation_map.put(key, maps);
-
-        commitChanges(keySpace, client, flevel, mutation_map);
-
-        //reset mutation map, maps and count;
-        mutation_map = new HashMap<ByteBuffer, Map<String, List<Mutation>>>();
-        maps = new HashMap<String, List<Mutation>>();
-        count = 0;
+      try {
+          //tODO check compression
+          CqlPreparedResult result = client.getProxyConnection().prepare_cql3_query(ByteBufferUtil.bytes(queryBuilder.toString()), Compression.NONE);
+          client.getProxyConnection().execute_prepared_cql3_query(result.itemId, values, flevel);
+      } catch (InvalidRequestException e) {
+          throw new IOException(e);
+      } catch (TException e) {
+          throw new IOException(e);
+      } catch (UnavailableException e) {
+          throw new IOException(e);
+      } catch (TimedOutException e) {
+          throw new IOException(e);
+      } catch (SchemaDisagreementException e) {
+          throw new IOException(e);
       }
-    }
-
-    if (count > 0) {
-      mutation_map.put(key, maps);
-      commitChanges(keySpace, client, flevel, mutation_map);
-    }
   }
 }
