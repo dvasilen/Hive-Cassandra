@@ -6,7 +6,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.cassandra.input.cql.LazyCqlRow;
 import org.apache.hadoop.hive.cassandra.output.CassandraPut;
-import org.apache.hadoop.hive.cassandra.serde.RegularTableMapping;
 import org.apache.hadoop.hive.cassandra.serde.TableMapping;
 import org.apache.hadoop.hive.serde.Constants;
 import org.apache.hadoop.hive.serde2.SerDe;
