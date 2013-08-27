@@ -6,6 +6,7 @@ import org.apache.hadoop.hive.cassandra.CassandraClientHolder;
 import org.apache.hadoop.hive.cassandra.CassandraException;
 import org.apache.hadoop.hive.cassandra.CassandraProxyClient;
 import org.apache.hadoop.hive.cassandra.serde.AbstractColumnSerDe;
+import org.apache.hadoop.hive.cassandra.serde.cql.AbstractCqlSerDe;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.api.*;
 import org.apache.hadoop.hive.metastore.api.Constants;
@@ -237,11 +238,34 @@ public class CqlManager {
             queryBuilder.append(hiveTypeToCqlType.get(columnTypes[i]));
             queryBuilder.append(",");
         }
+        String keyStr = getPropertyFromTable(AbstractCqlSerDe.CASSANDRA_COLUMN_FAMILY_PRIMARY_KEY);
+        if(keyStr == null || keyStr.isEmpty()) {
+            keyStr = columnNames[0];
+        }
         queryBuilder.append(" primary key (");
-        //todo how do we specify composite keys ?
-        queryBuilder.append(columnNames[0]);
+        queryBuilder.append(keyStr);
         queryBuilder.append(")");
         queryBuilder.append(")");
+
+        Map<String, String> options = constructTableOptions();
+        if(!options.isEmpty()){
+            queryBuilder.append(" WITH ");
+            Iterator<Map.Entry<String, String>> optionIterator = options.entrySet().iterator();
+            while (optionIterator.hasNext()){
+                Map.Entry<String, String> entry = optionIterator.next();
+
+                queryBuilder.append(entry.getKey());
+
+                queryBuilder.append(" = ");
+
+                queryBuilder.append(entry.getValue());
+
+
+                if(optionIterator.hasNext()){
+                    queryBuilder.append(" AND ");
+                }
+            }
+        }
 
         cch.getClient().execute_cql3_query(ByteBufferUtil.bytes(queryBuilder.toString()), Compression.NONE, ConsistencyLevel.ONE);
       return cf;
@@ -250,7 +274,7 @@ public class CqlManager {
               + e.getMessage());
     } catch (InvalidRequestException e) {
       throw new MetaException("Unable to create column family '" + columnFamilyName + "'. Error:"
-              + e.getMessage());
+              + e.getWhy());
     } catch (SchemaDisagreementException e) {
       throw new MetaException("Unable to create column family '" + columnFamilyName + "'. Error:"
               + e.getMessage());
@@ -263,6 +287,31 @@ public class CqlManager {
     }
 
   }
+    private Map<String, String> constructTableOptions(){
+
+        Map<String, String> options = new HashMap<String, String>();
+        addIfNotEmpty(AbstractCqlSerDe.COLUMN_FAMILY_COMMENT, options, true);
+        addIfNotEmpty(AbstractCqlSerDe.READ_REPAIR_CHANCE, options, false);
+        addIfNotEmpty(AbstractCqlSerDe.DCLOCAL_READ_REPAIR_CHANCE, options, false);
+        addIfNotEmpty(AbstractCqlSerDe.GC_GRACE_SECONDS, options, false);
+        addIfNotEmpty(AbstractCqlSerDe.BLOOM_FILTER_FP_CHANCE, options, false);
+        addIfNotEmpty(AbstractCqlSerDe.COMPACTION, options, false);
+        addIfNotEmpty(AbstractCqlSerDe.COMPRESSION, options, false);
+        addIfNotEmpty(AbstractCqlSerDe.REPLICATE_ON_WRITE, options, false);
+        addIfNotEmpty(AbstractCqlSerDe.CACHING, options, false);
+
+        return  options;
+    }
+
+    private void addIfNotEmpty(String property, Map<String, String> options, boolean wrapQuotes){
+        String temp = getPropertyFromTable(property);
+        if(wrapQuotes) {
+            temp = "'" + temp + "'";
+        }
+        if(temp != null && !temp.isEmpty()){
+            options.put(property, temp);
+        }
+    }
 
   private String getColumnType() throws MetaException {
     String prop = getPropertyFromTable(AbstractColumnSerDe.CASSANDRA_COL_MAPPING);

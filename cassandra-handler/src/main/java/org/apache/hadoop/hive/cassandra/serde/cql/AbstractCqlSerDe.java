@@ -61,6 +61,17 @@ public abstract class AbstractCqlSerDe implements SerDe {
   public static final String CASSANDRA_SPECIAL_COLUMN_SCOL = "sub_column_name";
   public static final String CASSANDRA_SPECIAL_COLUMN_VAL = "value";
 
+    public static final String CASSANDRA_COLUMN_FAMILY_PRIMARY_KEY = "cql.primarykey";
+    public static final String COLUMN_FAMILY_COMMENT = "comment";
+    public static final String READ_REPAIR_CHANCE = "read_repair_chance";
+    public static final String DCLOCAL_READ_REPAIR_CHANCE = "dclocal_read_repair_chance";
+    public static final String GC_GRACE_SECONDS = "gc_grace_seconds";
+    public static final String BLOOM_FILTER_FP_CHANCE = "bloom_filter_fp_chance";
+    public static final String COMPACTION = "compaction";
+    public static final String COMPRESSION = "compression";
+    public static final String REPLICATE_ON_WRITE = "replicate_on_write";
+    public static final String CACHING = "caching";
+
   public static final String CASSANDRA_KEY_COLUMN = ":key";
   public static final String CASSANDRA_COLUMN_COLUMN = ":column";
   public static final String CASSANDRA_SUBCOLUMN_COLUMN = ":subcolumn";
