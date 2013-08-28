@@ -11,6 +11,8 @@ import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.api.*;
 import org.apache.hadoop.hive.metastore.api.Constants;
 import org.apache.thrift.TException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -20,6 +22,7 @@ import java.util.*;
 public class CqlManager {
   final static public int DEFAULT_REPLICATION_FACTOR = 1;
   final static public String DEFAULT_STRATEGY = "org.apache.cassandra.locator.SimpleStrategy";
+    private static final Logger logger = LoggerFactory.getLogger(CqlManager.class);
 
     final static Map<String, String> hiveTypeToCqlType = new HashMap<String, String>();
 
@@ -108,51 +111,52 @@ public class CqlManager {
     }
   }
 
-  /**
-   * Get CfDef based on the configuration in the table.
-   */
-  private CfDef getCfDef() throws MetaException {
-    CfDef cf = new CfDef();
-    cf.setKeyspace(keyspace);
-    cf.setName(columnFamilyName);
-
-    cf.setColumn_type(getColumnType());
-
-    return cf;
-  }
-
-  /**
-   * Create a keyspace with columns defined in the table.
-   */
-  public KsDef createKeyspaceWithColumns()
-          throws MetaException {
-    try {
-      KsDef ks = new KsDef();
-      ks.setName(getCassandraKeyspace());
-      ks.setStrategy_class(getStrategy());
-
-      if (!ks.isSetStrategy_options())
-        ks.setStrategy_options(new HashMap<String, String>());
-
-      ks.putToStrategy_options("replication_factor", Integer.toString(getReplicationFactor()));
-
-      ks.addToCf_defs(getCfDef());
-
-      cch.getClient().system_add_keyspace(ks);
-      cch.getClient().set_keyspace(keyspace);
-      return ks;
-    } catch (TException e) {
-      throw new MetaException("Unable to create key space '" + keyspace + "'. Error:"
-              + e.getMessage());
-    } catch (InvalidRequestException e) {
-      throw new MetaException("Unable to create key space '" + keyspace + "'. Error:"
-              + e.getMessage());
-    } catch (SchemaDisagreementException e) {
-      throw new MetaException("Unable to create key space '" + keyspace + "'. Error:"
-              + e.getMessage());
+    public boolean doesKeyspaceExist() throws MetaException {
+        String getKeyspaceQuery = "select * from system.schema_keyspaces where keyspace_name='%s'";
+        try {
+            CqlResult result = cch.getClient().execute_cql3_query(ByteBufferUtil.bytes(String.format(getKeyspaceQuery, keyspace)), Compression.NONE, ConsistencyLevel.ONE);
+            List<CqlRow> rows = result.getRows();
+            //there can be only be one keyspace with the given name or no keyspace at all
+            assert rows.size() <= 1;
+            return rows.size() == 1;
+        } catch (InvalidRequestException e) {
+            throw new MetaException("Unable to create keyspace " + keyspace + ". Error:" + e.getWhy());
+        } catch (Exception e) {
+            throw new MetaException("Unable to create keyspace " + keyspace + ". Error:" + e.getMessage());
+        }
     }
 
-  }
+    public void createKeyspace() throws MetaException {
+        String createKeyspaceQuery = "create keyspace %s WITH replication = { 'class' : %s, %s } AND durable_writes = %s";
+        String durableWrites = getPropertyFromTable(AbstractCqlSerDe.DURABLE_WRITES);
+        if(durableWrites == null){
+            durableWrites = "true";
+        }
+        String strategy = "'" + getStrategy() + "'";
+        String query = String.format(createKeyspaceQuery, keyspace, strategy, getStrategyOptions(), durableWrites);
+        try {
+            cch.getClient().execute_cql3_query(ByteBufferUtil.bytes(query), Compression.NONE, ConsistencyLevel.ONE);
+        } catch (InvalidRequestException e) {
+            throw new MetaException("Unable to create keyspace '" + keyspace + "'. Error:" + e.getWhy());
+        } catch (Exception e) {
+            throw new MetaException("Unable to create keyspace '" + keyspace + "'. Error:" + e.getMessage());
+        }
+    }
+
+    public String getStrategyOptions() throws MetaException {
+        String replicationFactor = getPropertyFromTable(AbstractCqlSerDe.CASSANDRA_KEYSPACE_REPFACTOR);
+        String strategyOptions = getPropertyFromTable(AbstractCqlSerDe.CASSANDRA_KEYSPACE_STRATEGY_OPTIONS);
+        if(replicationFactor != null) {
+            if(strategyOptions != null){
+                throw new MetaException("Unable to create keyspace '" + keyspace + "' Specify only one of 'cassandra.ks.repfactor' or 'cassandra.ks.stratOptions'");
+            }
+            return "'replication_factor' : " + replicationFactor;
+        }
+        if(strategyOptions == null) {
+            throw new MetaException("Unable to create keyspace '" + keyspace + "' Specify either 'cassandra.ks.repfactor' or 'cassandra.ks.stratOptions'");
+        }
+        return strategyOptions;
+    }
 
   /**
    * Create the column family if it doesn't exist.
@@ -160,13 +164,10 @@ public class CqlManager {
    * @return
    * @throws MetaException
    */
-  public boolean createCFIfNotFound() throws MetaException {
+  public void createCFIfNotFound() throws MetaException {
     boolean cfExists = checkColumnFamily();
-
     if (!cfExists) {
-      return (createColumnFamily() != null);
-    } else {
-      return cfExists;
+      createColumnFamily();
     }
   }
 
@@ -212,8 +213,7 @@ public class CqlManager {
   /**
    * Create column family based on the configuration in the table.
    */
-  public CfDef createColumnFamily() throws MetaException {
-    CfDef cf = getCfDef();
+  public void createColumnFamily() throws MetaException {
     try {
       cch.getClient().set_keyspace(keyspace);
         Properties properties = MetaStoreUtils.getSchema(tbl);
@@ -268,7 +268,6 @@ public class CqlManager {
         }
 
         cch.getClient().execute_cql3_query(ByteBufferUtil.bytes(queryBuilder.toString()), Compression.NONE, ConsistencyLevel.ONE);
-      return cf;
     } catch (TException e) {
       throw new MetaException("Unable to create column family '" + columnFamilyName + "'. Error:"
               + e.getMessage());
@@ -313,56 +312,6 @@ public class CqlManager {
         }
     }
 
-  private String getColumnType() throws MetaException {
-    String prop = getPropertyFromTable(AbstractColumnSerDe.CASSANDRA_COL_MAPPING);
-    List<String> mapping;
-    if (prop != null) {
-      mapping = AbstractColumnSerDe.parseColumnMapping(prop);
-    } else {
-      List<FieldSchema> schema = tbl.getSd().getCols();
-      if (schema.size() == 0) {
-        throw new MetaException("Can't find table column definitions");
-      }
-
-      String[] colNames = new String[schema.size()];
-      for (int i = 0; i < schema.size(); i++) {
-        colNames[i] = schema.get(i).getName();
-      }
-
-      String mappingStr = AbstractColumnSerDe.createColumnMappingString(colNames);
-      mapping = Arrays.asList(mappingStr.split(","));
-    }
-
-    boolean hasKey = false;
-    boolean hasColumn = false;
-    boolean hasValue = false;
-    boolean hasSubColumn = false;
-
-    for (String column : mapping) {
-      if (column.equalsIgnoreCase(AbstractColumnSerDe.CASSANDRA_KEY_COLUMN)) {
-        hasKey = true;
-      } else if (column.equalsIgnoreCase(AbstractColumnSerDe.CASSANDRA_COLUMN_COLUMN)) {
-        hasColumn = true;
-      } else if (column.equalsIgnoreCase(AbstractColumnSerDe.CASSANDRA_SUBCOLUMN_COLUMN)) {
-        hasSubColumn = true;
-      } else if (column.equalsIgnoreCase(AbstractColumnSerDe.CASSANDRA_VALUE_COLUMN)) {
-        hasValue = true;
-      } else {
-        return "Standard";
-      }
-    }
-
-    if (hasKey && hasColumn && hasValue) {
-      if (hasSubColumn) {
-        return "Super";
-      } else {
-        return "Standard";
-      }
-    } else {
-      return "Standard";
-    }
-  }
-
   /**
    * Get replication factor from the table property.
    *
@@ -388,7 +337,7 @@ public class CqlManager {
    * @return strategy
    */
   private String getStrategy() {
-    String prop = getPropertyFromTable(AbstractColumnSerDe.CASSANDRA_KEYSPACE_STRATEGY);
+    String prop = getPropertyFromTable(AbstractCqlSerDe.CASSANDRA_KEYSPACE_STRATEGY);
     if (prop == null) {
       return DEFAULT_STRATEGY;
     } else {
