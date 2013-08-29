@@ -36,6 +36,8 @@ public abstract class AbstractCqlSerDe implements SerDe {
   public static final String CASSANDRA_KEYSPACE_NAME = "cassandra.ks.name"; // keyspace
   public static final String CASSANDRA_KEYSPACE_REPFACTOR = "cassandra.ks.repfactor"; //keyspace replication factor
   public static final String CASSANDRA_KEYSPACE_STRATEGY = "cassandra.ks.strategy"; //keyspace replica placement strategy
+    public static final String CASSANDRA_KEYSPACE_STRATEGY_OPTIONS = "cassandra.ks.stratOptions";
+    public static final String DURABLE_WRITES = "durable.writes";
 
   public static final String CASSANDRA_CF_NAME = "cassandra.cf.name"; // column family
   public static final String CASSANDRA_CF_COUNTERS = "cassandra.cf.counters"; // flag this as a counter CF
@@ -56,10 +58,16 @@ public abstract class AbstractCqlSerDe implements SerDe {
   public static final String CASSANDRA_SLICE_PREDICATE_RANGE_COUNT = "cassandra.slice.predicate.range.count";
   public static final String CASSANDRA_ENABLE_WIDEROW_ITERATOR = "cassandra.enable.widerow.iterator";
 
-  public static final String CASSANDRA_SPECIAL_COLUMN_KEY = "row_key";
-  public static final String CASSANDRA_SPECIAL_COLUMN_COL = "column_name";
-  public static final String CASSANDRA_SPECIAL_COLUMN_SCOL = "sub_column_name";
-  public static final String CASSANDRA_SPECIAL_COLUMN_VAL = "value";
+    public static final String CASSANDRA_COLUMN_FAMILY_PRIMARY_KEY = "cql.primarykey";
+    public static final String COLUMN_FAMILY_COMMENT = "comment";
+    public static final String READ_REPAIR_CHANCE = "read_repair_chance";
+    public static final String DCLOCAL_READ_REPAIR_CHANCE = "dclocal_read_repair_chance";
+    public static final String GC_GRACE_SECONDS = "gc_grace_seconds";
+    public static final String BLOOM_FILTER_FP_CHANCE = "bloom_filter_fp_chance";
+    public static final String COMPACTION = "compaction";
+    public static final String COMPRESSION = "compression";
+    public static final String REPLICATE_ON_WRITE = "replicate_on_write";
+    public static final String CACHING = "caching";
 
   public static final String CASSANDRA_KEY_COLUMN = ":key";
   public static final String CASSANDRA_COLUMN_COLUMN = ":column";

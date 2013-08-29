@@ -221,6 +221,10 @@ public class CqlStorageHandler
     try {
       //open connection to cassandra
       manager.openConnection();
+        if(!manager.doesKeyspaceExist()){
+            logger.info("Keyspace doesnot exist. Creating keyspace {}", table.getDbName());
+            manager.createKeyspace();
+        }
       //create the column family if it doesn't exist.
       manager.createCFIfNotFound();
     } finally {
