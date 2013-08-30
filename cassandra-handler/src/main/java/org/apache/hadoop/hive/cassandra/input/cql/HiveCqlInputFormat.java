@@ -1,10 +1,5 @@
 package org.apache.hadoop.hive.cassandra.input.cql;
 
-import org.apache.cassandra.db.marshal.AbstractType;
-import org.apache.cassandra.db.marshal.BytesType;
-import org.apache.cassandra.db.marshal.TypeParser;
-import org.apache.cassandra.exceptions.ConfigurationException;
-import org.apache.cassandra.exceptions.SyntaxException;
 import org.apache.cassandra.hadoop.ColumnFamilySplit;
 import org.apache.cassandra.hadoop.ConfigHelper;
 import org.apache.cassandra.hadoop.cql3.CqlPagingInputFormat;
@@ -14,13 +9,12 @@ import org.apache.cassandra.thrift.IndexExpression;
 import org.apache.cassandra.thrift.SlicePredicate;
 import org.apache.cassandra.thrift.SliceRange;
 import org.apache.cassandra.utils.ByteBufferUtil;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.cassandra.CassandraPushdownPredicate;
 import org.apache.hadoop.hive.cassandra.input.HiveCassandraStandardSplit;
-import org.apache.hadoop.hive.cassandra.serde.cql.AbstractCqlSerDe;
+import org.apache.hadoop.hive.cassandra.serde.AbstractCassandraSerDe;
 import org.apache.hadoop.hive.cassandra.serde.CassandraColumnSerDe;
+import org.apache.hadoop.hive.cassandra.serde.cql.CqlSerDe;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.index.IndexPredicateAnalyzer;
 import org.apache.hadoop.hive.ql.index.IndexSearchCondition;
@@ -34,6 +28,8 @@ import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -45,7 +41,7 @@ import java.util.Set;
 public class HiveCqlInputFormat extends InputFormat<MapWritable, MapWritable>
         implements org.apache.hadoop.mapred.InputFormat<MapWritable, MapWritable> {
 
-  static final Log LOG = LogFactory.getLog(HiveCqlInputFormat.class);
+  static final Logger LOG = LoggerFactory.getLogger(HiveCqlInputFormat.class);
 
   private final CqlPagingInputFormat cfif = new CqlPagingInputFormat();
 
@@ -54,7 +50,7 @@ public class HiveCqlInputFormat extends InputFormat<MapWritable, MapWritable>
                                                                 JobConf jobConf, final Reporter reporter) throws IOException {
     HiveCassandraStandardSplit cassandraSplit = (HiveCassandraStandardSplit) split;
 
-    List<String> columns = AbstractCqlSerDe.parseColumnMapping(cassandraSplit.getColumnMapping());
+    List<String> columns = CqlSerDe.parseColumnMapping(cassandraSplit.getColumnMapping());
 
 
     List<Integer> readColIDs = ColumnProjectionUtils.getReadColumnIDs(jobConf);
@@ -75,10 +71,7 @@ public class HiveCqlInputFormat extends InputFormat<MapWritable, MapWritable>
 
     SlicePredicate predicate = new SlicePredicate();
 
-
-    int iKey = columns.indexOf(AbstractCqlSerDe.CASSANDRA_KEY_COLUMN);
-    predicate.setColumn_names(getColumnNames(iKey, columns, readColIDs));
-
+    predicate.setColumn_names(getColumnNames(columns, readColIDs));
 
     try {
 
@@ -116,20 +109,20 @@ public class HiveCqlInputFormat extends InputFormat<MapWritable, MapWritable>
 
   @Override
   public InputSplit[] getSplits(JobConf jobConf, int numSplits) throws IOException {
-    String ks = jobConf.get(AbstractCqlSerDe.CASSANDRA_KEYSPACE_NAME);
-    String cf = jobConf.get(AbstractCqlSerDe.CASSANDRA_CF_NAME);
-    int slicePredicateSize = jobConf.getInt(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_SIZE,
-            AbstractCqlSerDe.DEFAULT_SLICE_PREDICATE_SIZE);
+    String ks = jobConf.get(AbstractCassandraSerDe.CASSANDRA_KEYSPACE_NAME);
+    String cf = jobConf.get(AbstractCassandraSerDe.CASSANDRA_CF_NAME);
+    int slicePredicateSize = jobConf.getInt(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_SIZE,
+            AbstractCassandraSerDe.DEFAULT_SLICE_PREDICATE_SIZE);
     int sliceRangeSize = jobConf.getInt(
-            AbstractCqlSerDe.CASSANDRA_RANGE_BATCH_SIZE,
-            AbstractCqlSerDe.DEFAULT_RANGE_BATCH_SIZE);
+            AbstractCassandraSerDe.CASSANDRA_RANGE_BATCH_SIZE,
+            AbstractCassandraSerDe.DEFAULT_RANGE_BATCH_SIZE);
     int splitSize = jobConf.getInt(
-            AbstractCqlSerDe.CASSANDRA_SPLIT_SIZE,
-            AbstractCqlSerDe.DEFAULT_SPLIT_SIZE);
-    String cassandraColumnMapping = jobConf.get(AbstractCqlSerDe.CASSANDRA_COL_MAPPING);
-    int rpcPort = jobConf.getInt(AbstractCqlSerDe.CASSANDRA_PORT, 9160);
-    String host = jobConf.get(AbstractCqlSerDe.CASSANDRA_HOST);
-    String partitioner = jobConf.get(AbstractCqlSerDe.CASSANDRA_PARTITIONER);
+            AbstractCassandraSerDe.CASSANDRA_SPLIT_SIZE,
+            AbstractCassandraSerDe.DEFAULT_SPLIT_SIZE);
+    String cassandraColumnMapping = jobConf.get(AbstractCassandraSerDe.CASSANDRA_COL_MAPPING);
+    int rpcPort = jobConf.getInt(AbstractCassandraSerDe.CASSANDRA_PORT, 9160);
+    String host = jobConf.get(AbstractCassandraSerDe.CASSANDRA_HOST);
+    String partitioner = jobConf.get(AbstractCassandraSerDe.CASSANDRA_PARTITIONER);
 
     if (cassandraColumnMapping == null) {
       throw new IOException("cassandra.columns.mapping required for Cassandra Table.");
@@ -180,20 +173,17 @@ public class HiveCqlInputFormat extends InputFormat<MapWritable, MapWritable>
    * column mapping
    * should be skipped.
    *
-   * @param iKey       the index of the key defined in the column mappping
    * @param columns    column mapping
    * @param readColIDs column names to read from cassandra
    */
-  private List<ByteBuffer> getColumnNames(int iKey, List<String> columns, List<Integer> readColIDs) {
+  private List<ByteBuffer> getColumnNames(List<String> columns, List<Integer> readColIDs) {
 
     List<ByteBuffer> results = new ArrayList();
     int maxSize = columns.size();
 
     for (Integer i : readColIDs) {
       assert (i < maxSize);
-      if (i != iKey) {
         results.add(ByteBufferUtil.bytes(columns.get(i.intValue())));
-      }
     }
 
     return results;
@@ -235,7 +225,7 @@ public class HiveCqlInputFormat extends InputFormat<MapWritable, MapWritable>
     }
 
     ExprNodeDesc filterExpr = Utilities.deserializeExpression(filterExprSerialized, jobConf);
-    String encodedIndexedColumns = jobConf.get(AbstractCqlSerDe.CASSANDRA_INDEXED_COLUMNS);
+    String encodedIndexedColumns = jobConf.get(AbstractCassandraSerDe.CASSANDRA_INDEXED_COLUMNS);
     Set<ColumnDef> indexedColumns = CassandraPushdownPredicate.deserializeIndexedColumns(encodedIndexedColumns);
     if (indexedColumns.isEmpty()) {
       return null;

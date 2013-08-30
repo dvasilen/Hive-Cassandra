@@ -1,16 +1,11 @@
 package org.apache.hadoop.hive.cassandra.output.cql;
 
-import java.io.IOException;
-import java.util.Properties;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.cassandra.CassandraException;
 import org.apache.hadoop.hive.cassandra.CassandraProxyClient;
 import org.apache.hadoop.hive.cassandra.output.Put;
-import org.apache.hadoop.hive.cassandra.serde.AbstractColumnSerDe;
+import org.apache.hadoop.hive.cassandra.serde.AbstractCassandraSerDe;
 import org.apache.hadoop.hive.ql.exec.FileSinkOperator.RecordWriter;
 import org.apache.hadoop.hive.ql.io.HiveOutputFormat;
 import org.apache.hadoop.io.Text;
@@ -18,21 +13,26 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputFormat;
 import org.apache.hadoop.util.Progressable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.Properties;
 
 @SuppressWarnings("deprecation")
 public class HiveCqlOutputFormat implements HiveOutputFormat<Text, CqlPut>,
         OutputFormat<Text, CqlPut> {
 
-  static final Log LOG = LogFactory.getLog(HiveCqlOutputFormat.class);
+  static final Logger LOG = LoggerFactory.getLogger(HiveCqlOutputFormat.class);
 
   @Override
   public RecordWriter getHiveRecordWriter(final JobConf jc, Path finalOutPath,
                                           Class<? extends Writable> valueClass, boolean isCompressed, Properties tableProperties,
                                           Progressable progress) throws IOException {
 
-    final String cassandraKeySpace = jc.get(AbstractColumnSerDe.CASSANDRA_KEYSPACE_NAME);
-    final String cassandraHost = jc.get(AbstractColumnSerDe.CASSANDRA_HOST);
-    final int cassandraPort = Integer.parseInt(jc.get(AbstractColumnSerDe.CASSANDRA_PORT));
+    final String cassandraKeySpace = jc.get(AbstractCassandraSerDe.CASSANDRA_KEYSPACE_NAME);
+    final String cassandraHost = jc.get(AbstractCassandraSerDe.CASSANDRA_HOST);
+    final int cassandraPort = Integer.parseInt(jc.get(AbstractCassandraSerDe.CASSANDRA_PORT));
 
     final CassandraProxyClient client;
     try {

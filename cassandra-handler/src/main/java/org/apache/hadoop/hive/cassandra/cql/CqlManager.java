@@ -5,11 +5,12 @@ import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.hadoop.hive.cassandra.CassandraClientHolder;
 import org.apache.hadoop.hive.cassandra.CassandraException;
 import org.apache.hadoop.hive.cassandra.CassandraProxyClient;
-import org.apache.hadoop.hive.cassandra.serde.AbstractColumnSerDe;
-import org.apache.hadoop.hive.cassandra.serde.cql.AbstractCqlSerDe;
+import org.apache.hadoop.hive.cassandra.serde.AbstractCassandraSerDe;
+import org.apache.hadoop.hive.cassandra.serde.cql.CqlSerDe;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
-import org.apache.hadoop.hive.metastore.api.*;
 import org.apache.hadoop.hive.metastore.api.Constants;
+import org.apache.hadoop.hive.metastore.api.MetaException;
+import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,22 +62,22 @@ public class CqlManager {
   public CqlManager(Table tbl) throws MetaException {
     Map<String, String> serdeParam = tbl.getSd().getSerdeInfo().getParameters();
 
-    String cassandraHost = serdeParam.get(AbstractColumnSerDe.CASSANDRA_HOST);
+    String cassandraHost = serdeParam.get(AbstractCassandraSerDe.CASSANDRA_HOST);
     if (cassandraHost == null) {
-      cassandraHost = AbstractColumnSerDe.DEFAULT_CASSANDRA_HOST;
+      cassandraHost = AbstractCassandraSerDe.DEFAULT_CASSANDRA_HOST;
     }
 
     this.host = cassandraHost;
 
-    String cassandraPortStr = serdeParam.get(AbstractColumnSerDe.CASSANDRA_PORT);
+    String cassandraPortStr = serdeParam.get(AbstractCassandraSerDe.CASSANDRA_PORT);
     if (cassandraPortStr == null) {
-      cassandraPortStr = AbstractColumnSerDe.DEFAULT_CASSANDRA_PORT;
+      cassandraPortStr = AbstractCassandraSerDe.DEFAULT_CASSANDRA_PORT;
     }
 
     try {
       port = Integer.parseInt(cassandraPortStr);
     } catch (NumberFormatException e) {
-      throw new MetaException(AbstractColumnSerDe.CASSANDRA_PORT + " must be a number");
+      throw new MetaException(AbstractCassandraSerDe.CASSANDRA_PORT + " must be a number");
     }
 
     this.tbl = tbl;
@@ -128,7 +129,7 @@ public class CqlManager {
 
     public void createKeyspace() throws MetaException {
         String createKeyspaceQuery = "create keyspace %s WITH replication = { 'class' : %s, %s } AND durable_writes = %s";
-        String durableWrites = getPropertyFromTable(AbstractCqlSerDe.DURABLE_WRITES);
+        String durableWrites = getPropertyFromTable(AbstractCassandraSerDe.DURABLE_WRITES);
         if(durableWrites == null){
             durableWrites = "true";
         }
@@ -144,8 +145,8 @@ public class CqlManager {
     }
 
     public String getStrategyOptions() throws MetaException {
-        String replicationFactor = getPropertyFromTable(AbstractCqlSerDe.CASSANDRA_KEYSPACE_REPFACTOR);
-        String strategyOptions = getPropertyFromTable(AbstractCqlSerDe.CASSANDRA_KEYSPACE_STRATEGY_OPTIONS);
+        String replicationFactor = getPropertyFromTable(AbstractCassandraSerDe.CASSANDRA_KEYSPACE_REPFACTOR);
+        String strategyOptions = getPropertyFromTable(AbstractCassandraSerDe.CASSANDRA_KEYSPACE_STRATEGY_OPTIONS);
         if(replicationFactor != null) {
             if(strategyOptions != null){
                 throw new MetaException("Unable to create keyspace '" + keyspace + "' Specify only one of 'cassandra.ks.repfactor' or 'cassandra.ks.stratOptions'");
@@ -238,7 +239,7 @@ public class CqlManager {
             queryBuilder.append(hiveTypeToCqlType.get(columnTypes[i]));
             queryBuilder.append(",");
         }
-        String keyStr = getPropertyFromTable(AbstractCqlSerDe.CASSANDRA_COLUMN_FAMILY_PRIMARY_KEY);
+        String keyStr = getPropertyFromTable(CqlSerDe.CASSANDRA_COLUMN_FAMILY_PRIMARY_KEY);
         if(keyStr == null || keyStr.isEmpty()) {
             keyStr = columnNames[0];
         }
@@ -289,15 +290,15 @@ public class CqlManager {
     private Map<String, String> constructTableOptions(){
 
         Map<String, String> options = new HashMap<String, String>();
-        addIfNotEmpty(AbstractCqlSerDe.COLUMN_FAMILY_COMMENT, options, true);
-        addIfNotEmpty(AbstractCqlSerDe.READ_REPAIR_CHANCE, options, false);
-        addIfNotEmpty(AbstractCqlSerDe.DCLOCAL_READ_REPAIR_CHANCE, options, false);
-        addIfNotEmpty(AbstractCqlSerDe.GC_GRACE_SECONDS, options, false);
-        addIfNotEmpty(AbstractCqlSerDe.BLOOM_FILTER_FP_CHANCE, options, false);
-        addIfNotEmpty(AbstractCqlSerDe.COMPACTION, options, false);
-        addIfNotEmpty(AbstractCqlSerDe.COMPRESSION, options, false);
-        addIfNotEmpty(AbstractCqlSerDe.REPLICATE_ON_WRITE, options, false);
-        addIfNotEmpty(AbstractCqlSerDe.CACHING, options, false);
+        addIfNotEmpty(AbstractCassandraSerDe.COLUMN_FAMILY_COMMENT, options, true);
+        addIfNotEmpty(AbstractCassandraSerDe.READ_REPAIR_CHANCE, options, false);
+        addIfNotEmpty(AbstractCassandraSerDe.DCLOCAL_READ_REPAIR_CHANCE, options, false);
+        addIfNotEmpty(AbstractCassandraSerDe.GC_GRACE_SECONDS, options, false);
+        addIfNotEmpty(AbstractCassandraSerDe.BLOOM_FILTER_FP_CHANCE, options, false);
+        addIfNotEmpty(AbstractCassandraSerDe.COMPACTION, options, false);
+        addIfNotEmpty(AbstractCassandraSerDe.COMPRESSION, options, false);
+        addIfNotEmpty(AbstractCassandraSerDe.REPLICATE_ON_WRITE, options, false);
+        addIfNotEmpty(AbstractCassandraSerDe.CACHING, options, false);
 
         return  options;
     }
@@ -319,14 +320,14 @@ public class CqlManager {
    * @throws MetaException error
    */
   private int getReplicationFactor() throws MetaException {
-    String prop = getPropertyFromTable(AbstractColumnSerDe.CASSANDRA_KEYSPACE_REPFACTOR);
+    String prop = getPropertyFromTable(AbstractCassandraSerDe.CASSANDRA_KEYSPACE_REPFACTOR);
     if (prop == null) {
       return DEFAULT_REPLICATION_FACTOR;
     } else {
       try {
         return Integer.parseInt(prop);
       } catch (NumberFormatException e) {
-        throw new MetaException(AbstractColumnSerDe.CASSANDRA_KEYSPACE_REPFACTOR + " must be a number");
+        throw new MetaException(AbstractCassandraSerDe.CASSANDRA_KEYSPACE_REPFACTOR + " must be a number");
       }
     }
   }
@@ -337,7 +338,7 @@ public class CqlManager {
    * @return strategy
    */
   private String getStrategy() {
-    String prop = getPropertyFromTable(AbstractCqlSerDe.CASSANDRA_KEYSPACE_STRATEGY);
+    String prop = getPropertyFromTable(AbstractCassandraSerDe.CASSANDRA_KEYSPACE_STRATEGY);
     if (prop == null) {
       return DEFAULT_STRATEGY;
     } else {
@@ -351,13 +352,13 @@ public class CqlManager {
    * @return keyspace name
    */
   private String getCassandraKeyspace() {
-    String tableName = getPropertyFromTable(AbstractColumnSerDe.CASSANDRA_KEYSPACE_NAME);
+    String tableName = getPropertyFromTable(AbstractCassandraSerDe.CASSANDRA_KEYSPACE_NAME);
 
     if (tableName == null) {
       tableName = tbl.getDbName();
     }
 
-    tbl.getParameters().put(AbstractColumnSerDe.CASSANDRA_KEYSPACE_NAME, tableName);
+    tbl.getParameters().put(AbstractCassandraSerDe.CASSANDRA_KEYSPACE_NAME, tableName);
 
     return tableName;
   }
@@ -368,13 +369,13 @@ public class CqlManager {
    * @return cassandra column family name
    */
   private String getCassandraColumnFamily() {
-    String tableName = getPropertyFromTable(AbstractColumnSerDe.CASSANDRA_CF_NAME);
+    String tableName = getPropertyFromTable(AbstractCassandraSerDe.CASSANDRA_CF_NAME);
 
     if (tableName == null) {
       tableName = tbl.getTableName();
     }
 
-    tbl.getParameters().put(AbstractColumnSerDe.CASSANDRA_CF_NAME, tableName);
+    tbl.getParameters().put(AbstractCassandraSerDe.CASSANDRA_CF_NAME, tableName);
 
     return tableName;
   }

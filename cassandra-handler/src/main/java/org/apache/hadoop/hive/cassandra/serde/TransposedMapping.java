@@ -18,11 +18,15 @@ public class TransposedMapping extends TableMapping {
   private int columnValue = -1;
   private int subColumnName = -1;
 
+  // index of key column in results
+  protected final int iKey;
+
   public TransposedMapping(
       String colFamily,
       List<String> columnNames,
       SerDeParameters serdeParams) throws SerDeException {
     super(colFamily, columnNames, serdeParams);
+      this.iKey = cassandraColumnNames.indexOf(CassandraColumnSerDe.CASSANDRA_KEY_COLUMN);
     init();
   }
 
@@ -30,7 +34,17 @@ public class TransposedMapping extends TableMapping {
     setTransposedTableIndex();
   }
 
-  @Override
+    public Writable getWritable(
+            List<? extends StructField> fields,
+            List<Object> list,
+            List<? extends StructField> declaredFields) throws IOException {
+        assert iKey >= 0;
+        //First get the cassandra row key
+        byte[] keyBytes = serializeToBytes(iKey, fields, list, declaredFields);
+
+        return write(keyBytes, fields, list, declaredFields);
+    }
+
   public Writable write(
       byte[] keyBytes,
       List<? extends StructField> fields,
@@ -83,13 +97,13 @@ public class TransposedMapping extends TableMapping {
     int subColumnName = -1;
     for (int i = 0; i < cassandraColumnNames.size(); i++) {
       String str = cassandraColumnNames.get(i);
-      if (str.equals(AbstractColumnSerDe.CASSANDRA_KEY_COLUMN)) {
+      if (str.equals(CassandraColumnSerDe.CASSANDRA_KEY_COLUMN)) {
         key = i;
-      } else if  (str.equals(AbstractColumnSerDe.CASSANDRA_COLUMN_COLUMN)) {
+      } else if  (str.equals(CassandraColumnSerDe.CASSANDRA_COLUMN_COLUMN)) {
         columnName = i;
-      } else if (str.equals(AbstractColumnSerDe.CASSANDRA_VALUE_COLUMN)) {
+      } else if (str.equals(CassandraColumnSerDe.CASSANDRA_VALUE_COLUMN)) {
         columnValue = i;
-      } else if (str.equals(AbstractColumnSerDe.CASSANDRA_SUBCOLUMN_COLUMN)) {
+      } else if (str.equals(CassandraColumnSerDe.CASSANDRA_SUBCOLUMN_COLUMN)) {
         subColumnName = i;
       } else {
         throw new SerDeException("An expected mapping appears in the column mapping " + str);

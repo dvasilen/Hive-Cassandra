@@ -1,11 +1,5 @@
 package org.apache.hadoop.hive.cassandra.input;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.cassandra.serde.CassandraLazyFactory;
 import org.apache.hadoop.hive.serde2.lazy.ByteArrayRef;
 import org.apache.hadoop.hive.serde2.lazy.LazyObject;
@@ -16,9 +10,15 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.MapWritable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class LazyCassandraRow extends LazyStruct {
-  static final Log LOG = LogFactory.getLog(LazyCassandraRow.class);
+  static final Logger LOG = LoggerFactory.getLogger(LazyCassandraRow.class);
 
   private List<String> cassandraColumns;
   private List<BytesWritable> cassandraColumnsBB;
