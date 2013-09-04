@@ -51,7 +51,7 @@ Inserting values into CQL3 table through hive:
 
 The values from tweets table are appended to messages table.
 
-    Note: INSERT OVERWRITE is not supported at the time of this writing.
+    Note: With Cassandra INSERT OVERWRITE is same as INSERT INTO as Cassandra merges changes if keys are same.
 
 Retrieving values from a CQL3 table using hive:
 
