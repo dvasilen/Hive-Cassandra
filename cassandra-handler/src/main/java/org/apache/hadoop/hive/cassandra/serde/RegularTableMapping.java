@@ -14,21 +14,29 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.io.Writable;
 
 public class RegularTableMapping extends TableMapping {
+
+    // index of key column in results
+    protected final int iKey;
+
   public RegularTableMapping(
       String colFamily,
       List<String> columnNames,
       SerDeParameters serdeParams) {
     super(colFamily, columnNames, serdeParams);
+      this.iKey = cassandraColumnNames.indexOf(CassandraColumnSerDe.CASSANDRA_KEY_COLUMN);
   }
 
-    public RegularTableMapping(
-            String colFamily,
-            List<String> columnNames,
-            SerDeParameters serdeParams, int iKey) {
-        super(colFamily, columnNames, serdeParams, iKey);
+    public Writable getWritable(
+            List<? extends StructField> fields,
+            List<Object> list,
+            List<? extends StructField> declaredFields) throws IOException {
+        assert iKey >= 0;
+        //First get the cassandra row key
+        byte[] keyBytes = serializeToBytes(iKey, fields, list, declaredFields);
+
+        return write(keyBytes, fields, list, declaredFields);
     }
 
-  @Override
   public Writable write(
       byte[] keyBytes,
       List<? extends StructField> fields,

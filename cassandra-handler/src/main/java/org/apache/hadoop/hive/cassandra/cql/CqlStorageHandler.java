@@ -6,7 +6,7 @@ import org.apache.hadoop.hive.cassandra.CassandraException;
 import org.apache.hadoop.hive.cassandra.CassandraManager;
 import org.apache.hadoop.hive.cassandra.input.cql.HiveCqlInputFormat;
 import org.apache.hadoop.hive.cassandra.output.cql.HiveCqlOutputFormat;
-import org.apache.hadoop.hive.cassandra.serde.cql.AbstractCqlSerDe;
+import org.apache.hadoop.hive.cassandra.serde.AbstractCassandraSerDe;
 import org.apache.hadoop.hive.cassandra.serde.cql.CqlSerDe;
 import org.apache.hadoop.hive.metastore.HiveMetaHook;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
@@ -43,129 +43,129 @@ public class CqlStorageHandler
     Properties tableProperties = tableDesc.getProperties();
 
     //Identify Keyspace
-    String keyspace = tableProperties.getProperty(AbstractCqlSerDe.CASSANDRA_KEYSPACE_NAME);
+    String keyspace = tableProperties.getProperty(AbstractCassandraSerDe.CASSANDRA_KEYSPACE_NAME);
     if (keyspace == null) {
       keyspace = tableProperties.getProperty(Constants.META_TABLE_DB);
     }
 
-    jobProperties.put(AbstractCqlSerDe.CASSANDRA_KEYSPACE_NAME, keyspace);
+    jobProperties.put(AbstractCassandraSerDe.CASSANDRA_KEYSPACE_NAME, keyspace);
 
     //Identify ColumnFamily
-    String columnFamily = tableProperties.getProperty(AbstractCqlSerDe.CASSANDRA_CF_NAME);
+    String columnFamily = tableProperties.getProperty(AbstractCassandraSerDe.CASSANDRA_CF_NAME);
     if (columnFamily == null) {
       columnFamily = tableProperties.getProperty(Constants.META_TABLE_NAME);
     }
 
-    jobProperties.put(AbstractCqlSerDe.CASSANDRA_CF_NAME, columnFamily);
+    jobProperties.put(AbstractCassandraSerDe.CASSANDRA_CF_NAME, columnFamily);
 
     //If no column mapping has been configured, we should create the default column mapping.
-    String columnInfo = tableProperties.getProperty(AbstractCqlSerDe.CASSANDRA_COL_MAPPING);
+    String columnInfo = tableProperties.getProperty(AbstractCassandraSerDe.CASSANDRA_COL_MAPPING);
     if (columnInfo == null) {
-      columnInfo = AbstractCqlSerDe.createColumnMappingString(
+      columnInfo = CqlSerDe.createColumnMappingString(
               tableProperties.getProperty(org.apache.hadoop.hive.serde.Constants.LIST_COLUMNS));
     }
-    jobProperties.put(AbstractCqlSerDe.CASSANDRA_COL_MAPPING, columnInfo);
+    jobProperties.put(AbstractCassandraSerDe.CASSANDRA_COL_MAPPING, columnInfo);
 
-    String host = configuration.get(AbstractCqlSerDe.CASSANDRA_HOST);
+    String host = configuration.get(AbstractCassandraSerDe.CASSANDRA_HOST);
     if (host == null) {
-      host = tableProperties.getProperty(AbstractCqlSerDe.CASSANDRA_HOST, AbstractCqlSerDe.DEFAULT_CASSANDRA_HOST);
+      host = tableProperties.getProperty(AbstractCassandraSerDe.CASSANDRA_HOST, AbstractCassandraSerDe.DEFAULT_CASSANDRA_HOST);
     }
 
-    jobProperties.put(AbstractCqlSerDe.CASSANDRA_HOST, host);
+    jobProperties.put(AbstractCassandraSerDe.CASSANDRA_HOST, host);
 
-    String port = configuration.get(AbstractCqlSerDe.CASSANDRA_PORT);
+    String port = configuration.get(AbstractCassandraSerDe.CASSANDRA_PORT);
     if (port == null) {
-      port = tableProperties.getProperty(AbstractCqlSerDe.CASSANDRA_PORT, AbstractCqlSerDe.DEFAULT_CASSANDRA_PORT);
+      port = tableProperties.getProperty(AbstractCassandraSerDe.CASSANDRA_PORT, AbstractCassandraSerDe.DEFAULT_CASSANDRA_PORT);
     }
 
-    jobProperties.put(AbstractCqlSerDe.CASSANDRA_PORT, port);
+    jobProperties.put(AbstractCassandraSerDe.CASSANDRA_PORT, port);
 
-    if (configuration.get(AbstractCqlSerDe.CASSANDRA_PARTITIONER) == null) {
-      jobProperties.put(AbstractCqlSerDe.CASSANDRA_PARTITIONER,
-              tableProperties.getProperty(AbstractCqlSerDe.CASSANDRA_PARTITIONER,
+    if (configuration.get(AbstractCassandraSerDe.CASSANDRA_PARTITIONER) == null) {
+      jobProperties.put(AbstractCassandraSerDe.CASSANDRA_PARTITIONER,
+              tableProperties.getProperty(AbstractCassandraSerDe.CASSANDRA_PARTITIONER,
                       "org.apache.cassandra.dht.Murmur3Partitioner"));
     } else {
-      jobProperties.put(AbstractCqlSerDe.CASSANDRA_PARTITIONER, configuration.get(AbstractCqlSerDe.CASSANDRA_PARTITIONER));
+      jobProperties.put(AbstractCassandraSerDe.CASSANDRA_PARTITIONER, configuration.get(AbstractCassandraSerDe.CASSANDRA_PARTITIONER));
     }
 
-    if (configuration.get(AbstractCqlSerDe.CASSANDRA_CONSISTENCY_LEVEL) == null) {
-      jobProperties.put(AbstractCqlSerDe.CASSANDRA_CONSISTENCY_LEVEL,
-              tableProperties.getProperty(AbstractCqlSerDe.CASSANDRA_CONSISTENCY_LEVEL,
-                      AbstractCqlSerDe.DEFAULT_CONSISTENCY_LEVEL));
+    if (configuration.get(AbstractCassandraSerDe.CASSANDRA_CONSISTENCY_LEVEL) == null) {
+      jobProperties.put(AbstractCassandraSerDe.CASSANDRA_CONSISTENCY_LEVEL,
+              tableProperties.getProperty(AbstractCassandraSerDe.CASSANDRA_CONSISTENCY_LEVEL,
+                      AbstractCassandraSerDe.DEFAULT_CONSISTENCY_LEVEL));
     } else {
-      jobProperties.put(AbstractCqlSerDe.CASSANDRA_CONSISTENCY_LEVEL, configuration.get(AbstractCqlSerDe.CASSANDRA_CONSISTENCY_LEVEL));
+      jobProperties.put(AbstractCassandraSerDe.CASSANDRA_CONSISTENCY_LEVEL, configuration.get(AbstractCassandraSerDe.CASSANDRA_CONSISTENCY_LEVEL));
     }
 
-    if (configuration.get(AbstractCqlSerDe.CASSANDRA_RANGE_BATCH_SIZE) == null) {
-      jobProperties.put(AbstractCqlSerDe.CASSANDRA_RANGE_BATCH_SIZE,
-              tableProperties.getProperty(AbstractCqlSerDe.CASSANDRA_RANGE_BATCH_SIZE,
-                      Integer.toString(AbstractCqlSerDe.DEFAULT_RANGE_BATCH_SIZE)));
+    if (configuration.get(AbstractCassandraSerDe.CASSANDRA_RANGE_BATCH_SIZE) == null) {
+      jobProperties.put(AbstractCassandraSerDe.CASSANDRA_RANGE_BATCH_SIZE,
+              tableProperties.getProperty(AbstractCassandraSerDe.CASSANDRA_RANGE_BATCH_SIZE,
+                      Integer.toString(AbstractCassandraSerDe.DEFAULT_RANGE_BATCH_SIZE)));
     } else {
-      jobProperties.put(AbstractCqlSerDe.CASSANDRA_RANGE_BATCH_SIZE, configuration.get(AbstractCqlSerDe.CASSANDRA_RANGE_BATCH_SIZE));
+      jobProperties.put(AbstractCassandraSerDe.CASSANDRA_RANGE_BATCH_SIZE, configuration.get(AbstractCassandraSerDe.CASSANDRA_RANGE_BATCH_SIZE));
     }
 
-    if (configuration.get(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_SIZE) == null) {
-      jobProperties.put(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_SIZE,
-              tableProperties.getProperty(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_SIZE,
-                      Integer.toString(AbstractCqlSerDe.DEFAULT_SLICE_PREDICATE_SIZE)));
+    if (configuration.get(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_SIZE) == null) {
+      jobProperties.put(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_SIZE,
+              tableProperties.getProperty(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_SIZE,
+                      Integer.toString(AbstractCassandraSerDe.DEFAULT_SLICE_PREDICATE_SIZE)));
     } else {
-      jobProperties.put(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_SIZE, configuration.get(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_SIZE));
+      jobProperties.put(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_SIZE, configuration.get(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_SIZE));
     }
 
-    if (configuration.get(AbstractCqlSerDe.CASSANDRA_SPLIT_SIZE) == null) {
-      jobProperties.put(AbstractCqlSerDe.CASSANDRA_SPLIT_SIZE,
-              tableProperties.getProperty(AbstractCqlSerDe.CASSANDRA_SPLIT_SIZE,
-                      Integer.toString(AbstractCqlSerDe.DEFAULT_SPLIT_SIZE)));
+    if (configuration.get(AbstractCassandraSerDe.CASSANDRA_SPLIT_SIZE) == null) {
+      jobProperties.put(AbstractCassandraSerDe.CASSANDRA_SPLIT_SIZE,
+              tableProperties.getProperty(AbstractCassandraSerDe.CASSANDRA_SPLIT_SIZE,
+                      Integer.toString(AbstractCassandraSerDe.DEFAULT_SPLIT_SIZE)));
     } else {
-      jobProperties.put(AbstractCqlSerDe.CASSANDRA_SPLIT_SIZE, configuration.get(AbstractCqlSerDe.CASSANDRA_SPLIT_SIZE));
+      jobProperties.put(AbstractCassandraSerDe.CASSANDRA_SPLIT_SIZE, configuration.get(AbstractCassandraSerDe.CASSANDRA_SPLIT_SIZE));
     }
 
-    if (configuration.get(AbstractCqlSerDe.CASSANDRA_BATCH_MUTATION_SIZE) == null) {
-      jobProperties.put(AbstractCqlSerDe.CASSANDRA_BATCH_MUTATION_SIZE,
-              tableProperties.getProperty(AbstractCqlSerDe.CASSANDRA_BATCH_MUTATION_SIZE,
-                      Integer.toString(AbstractCqlSerDe.DEFAULT_BATCH_MUTATION_SIZE)));
+    if (configuration.get(AbstractCassandraSerDe.CASSANDRA_BATCH_MUTATION_SIZE) == null) {
+      jobProperties.put(AbstractCassandraSerDe.CASSANDRA_BATCH_MUTATION_SIZE,
+              tableProperties.getProperty(AbstractCassandraSerDe.CASSANDRA_BATCH_MUTATION_SIZE,
+                      Integer.toString(AbstractCassandraSerDe.DEFAULT_BATCH_MUTATION_SIZE)));
     } else {
-      jobProperties.put(AbstractCqlSerDe.CASSANDRA_BATCH_MUTATION_SIZE, configuration.get(AbstractCqlSerDe.CASSANDRA_BATCH_MUTATION_SIZE));
+      jobProperties.put(AbstractCassandraSerDe.CASSANDRA_BATCH_MUTATION_SIZE, configuration.get(AbstractCassandraSerDe.CASSANDRA_BATCH_MUTATION_SIZE));
     }
 
-    if (configuration.get(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_START) == null) {
-      jobProperties.put(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_START,
-              tableProperties.getProperty(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_START, ""));
+    if (configuration.get(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_START) == null) {
+      jobProperties.put(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_START,
+              tableProperties.getProperty(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_START, ""));
     } else {
-      jobProperties.put(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_START, configuration.get(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_START));
+      jobProperties.put(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_START, configuration.get(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_START));
     }
 
-    if (configuration.get(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_FINISH) == null) {
-      jobProperties.put(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_FINISH,
-              tableProperties.getProperty(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_FINISH, ""));
+    if (configuration.get(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_FINISH) == null) {
+      jobProperties.put(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_FINISH,
+              tableProperties.getProperty(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_FINISH, ""));
     } else {
-      jobProperties.put(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_FINISH, configuration.get(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_FINISH));
+      jobProperties.put(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_FINISH, configuration.get(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_FINISH));
     }
 
-    if (configuration.get(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_COMPARATOR) == null) {
-      jobProperties.put(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_COMPARATOR,
-              tableProperties.getProperty(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_COMPARATOR, ""));
+    if (configuration.get(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_COMPARATOR) == null) {
+      jobProperties.put(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_COMPARATOR,
+              tableProperties.getProperty(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_COMPARATOR, ""));
     } else {
-      jobProperties.put(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_COMPARATOR,
-              configuration.get(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_COMPARATOR));
+      jobProperties.put(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_COMPARATOR,
+              configuration.get(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_COMPARATOR));
     }
 
-    if (configuration.get(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_REVERSED) == null) {
-      jobProperties.put(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_REVERSED,
-              tableProperties.getProperty(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_REVERSED, "false"));
+    if (configuration.get(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_REVERSED) == null) {
+      jobProperties.put(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_REVERSED,
+              tableProperties.getProperty(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_REVERSED, "false"));
     } else {
-      jobProperties.put(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_REVERSED,
-              configuration.get(AbstractCqlSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_REVERSED));
+      jobProperties.put(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_REVERSED,
+              configuration.get(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_REVERSED));
     }
 
     //Set the indexed column names - leave unset if we have problems determining them
-    String indexedColumns = tableProperties.getProperty(AbstractCqlSerDe.CASSANDRA_INDEXED_COLUMNS);
+    String indexedColumns = tableProperties.getProperty(AbstractCassandraSerDe.CASSANDRA_INDEXED_COLUMNS);
     if (indexedColumns != null) {
-      jobProperties.put(AbstractCqlSerDe.CASSANDRA_INDEXED_COLUMNS, indexedColumns);
+      jobProperties.put(AbstractCassandraSerDe.CASSANDRA_INDEXED_COLUMNS, indexedColumns);
     } else {
       try {
         Set<ColumnDef> columns = CqlPushdownPredicate.getIndexedColumns(host, Integer.parseInt(port), keyspace, columnFamily);
-        jobProperties.put(AbstractCqlSerDe.CASSANDRA_INDEXED_COLUMNS, CqlPushdownPredicate.serializeIndexedColumns(columns));
+        jobProperties.put(AbstractCassandraSerDe.CASSANDRA_INDEXED_COLUMNS, CqlPushdownPredicate.serializeIndexedColumns(columns));
       } catch (CassandraException e) {
         // this results in the property remaining unset on the Jobconf, so indexes will not be used on the C* side
         logger.info("Error determining cassandra indexed columns, will not include in JobConf", e);
@@ -305,8 +305,8 @@ public class CqlStorageHandler
   public DecomposedPredicate decomposePredicate(JobConf jobConf, Deserializer deserializer, ExprNodeDesc predicate) {
     try {
       CqlSerDe cassandraSerde = (CqlSerDe) deserializer;
-      String host = jobConf.get(AbstractCqlSerDe.CASSANDRA_HOST, AbstractCqlSerDe.DEFAULT_CASSANDRA_HOST);
-      int port = jobConf.getInt(AbstractCqlSerDe.CASSANDRA_PORT, Integer.parseInt(AbstractCqlSerDe.DEFAULT_CASSANDRA_PORT));
+      String host = jobConf.get(AbstractCassandraSerDe.CASSANDRA_HOST, AbstractCassandraSerDe.DEFAULT_CASSANDRA_HOST);
+      int port = jobConf.getInt(AbstractCassandraSerDe.CASSANDRA_PORT, Integer.parseInt(AbstractCassandraSerDe.DEFAULT_CASSANDRA_PORT));
       String ksName = cassandraSerde.getCassandraKeyspace();
       String cfName = cassandraSerde.getCassandraColumnFamily();
       Set<ColumnDef> indexedColumns = CqlPushdownPredicate.getIndexedColumns(host, port, ksName, cfName);

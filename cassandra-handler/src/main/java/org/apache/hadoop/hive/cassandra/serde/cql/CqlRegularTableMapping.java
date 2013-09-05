@@ -18,13 +18,18 @@ public class CqlRegularTableMapping extends TableMapping {
     public CqlRegularTableMapping(
             String colFamily,
             List<String> columnNames,
-            SerDeParameters serdeParams, int iKey) {
-        super(colFamily, columnNames, serdeParams, iKey);
+            SerDeParameters serdeParams) {
+        super(colFamily, columnNames, serdeParams);
     }
 
     @Override
+    public Writable getWritable(List<? extends StructField> fields,
+                                List<Object> list,
+                                List<? extends StructField> declaredFields) throws IOException {
+        return write(fields, list, declaredFields);
+    }
+
     public Writable write(
-            byte[] keyBytes,
             List<? extends StructField> fields,
             List<Object> list,
             List<? extends StructField> declaredFields) throws IOException {

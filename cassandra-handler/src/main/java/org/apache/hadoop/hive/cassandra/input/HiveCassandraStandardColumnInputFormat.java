@@ -1,15 +1,9 @@
 package org.apache.hadoop.hive.cassandra.input;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-
-import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.BytesType;
 import org.apache.cassandra.db.marshal.TypeParser;
+import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.exceptions.SyntaxException;
 import org.apache.cassandra.hadoop.ColumnFamilyInputFormat;
 import org.apache.cassandra.hadoop.ColumnFamilyRecordReader;
@@ -20,11 +14,9 @@ import org.apache.cassandra.thrift.IndexExpression;
 import org.apache.cassandra.thrift.SlicePredicate;
 import org.apache.cassandra.thrift.SliceRange;
 import org.apache.cassandra.utils.ByteBufferUtil;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.cassandra.CassandraPushdownPredicate;
-import org.apache.hadoop.hive.cassandra.serde.AbstractColumnSerDe;
+import org.apache.hadoop.hive.cassandra.serde.AbstractCassandraSerDe;
 import org.apache.hadoop.hive.cassandra.serde.CassandraColumnSerDe;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.index.IndexPredicateAnalyzer;
@@ -38,18 +30,22 @@ import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
-import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.TaskAttemptID;
+import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 @SuppressWarnings("deprecation")
 public class HiveCassandraStandardColumnInputFormat extends InputFormat<BytesWritable, MapWritable>
         implements org.apache.hadoop.mapred.InputFormat<BytesWritable, MapWritable> {
 
-    static final Log LOG = LogFactory.getLog(HiveCassandraStandardColumnInputFormat.class);
+    static final Logger LOG = LoggerFactory.getLogger(HiveCassandraStandardColumnInputFormat.class);
 
     private boolean isTransposed;
     private final ColumnFamilyInputFormat cfif = new ColumnFamilyInputFormat();
@@ -59,8 +55,8 @@ public class HiveCassandraStandardColumnInputFormat extends InputFormat<BytesWri
                                                                     JobConf jobConf, final Reporter reporter) throws IOException {
         HiveCassandraStandardSplit cassandraSplit = (HiveCassandraStandardSplit) split;
 
-        List<String> columns = AbstractColumnSerDe.parseColumnMapping(cassandraSplit.getColumnMapping());
-        isTransposed = AbstractColumnSerDe.isTransposed(columns);
+        List<String> columns = CassandraColumnSerDe.parseColumnMapping(cassandraSplit.getColumnMapping());
+        isTransposed = CassandraColumnSerDe.isTransposed(columns);
 
 
         List<Integer> readColIDs = ColumnProjectionUtils.getReadColumnIDs(jobConf);
@@ -85,7 +81,7 @@ public class HiveCassandraStandardColumnInputFormat extends InputFormat<BytesWri
             SliceRange range = new SliceRange();
             AbstractType comparator = BytesType.instance;
 
-            String comparatorType = jobConf.get(AbstractColumnSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_COMPARATOR);
+            String comparatorType = jobConf.get(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_COMPARATOR);
             if (comparatorType != null && !comparatorType.equals("")) {
                 try {
                     comparator = TypeParser.parse(comparatorType);
@@ -96,9 +92,9 @@ public class HiveCassandraStandardColumnInputFormat extends InputFormat<BytesWri
                 }
             }
 
-            String sliceStart = jobConf.get(AbstractColumnSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_START);
-            String sliceEnd = jobConf.get(AbstractColumnSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_FINISH);
-            String reversed = jobConf.get(AbstractColumnSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_REVERSED);
+            String sliceStart = jobConf.get(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_START);
+            String sliceEnd = jobConf.get(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_FINISH);
+            String reversed = jobConf.get(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_RANGE_REVERSED);
 
             range.setStart(comparator.fromString(sliceStart == null ? "" : sliceStart));
             range.setFinish(comparator.fromString(sliceEnd == null ? "" : sliceEnd));
@@ -106,7 +102,7 @@ public class HiveCassandraStandardColumnInputFormat extends InputFormat<BytesWri
             range.setCount(cassandraSplit.getSlicePredicateSize());
             predicate.setSlice_range(range);
         } else {
-            int iKey = columns.indexOf(AbstractColumnSerDe.CASSANDRA_KEY_COLUMN);
+            int iKey = columns.indexOf(CassandraColumnSerDe.CASSANDRA_KEY_COLUMN);
             predicate.setColumn_names(getColumnNames(iKey, columns, readColIDs));
         }
 
@@ -114,7 +110,7 @@ public class HiveCassandraStandardColumnInputFormat extends InputFormat<BytesWri
         try {
 
             boolean wideRows = false;
-            if (isTransposed && tac.getConfiguration().getBoolean(AbstractColumnSerDe.CASSANDRA_ENABLE_WIDEROW_ITERATOR, true)) {
+            if (isTransposed && tac.getConfiguration().getBoolean(CassandraColumnSerDe.CASSANDRA_ENABLE_WIDEROW_ITERATOR, true)) {
                 wideRows = true;
             }
 
@@ -150,20 +146,20 @@ public class HiveCassandraStandardColumnInputFormat extends InputFormat<BytesWri
 
     @Override
     public InputSplit[] getSplits(JobConf jobConf, int numSplits) throws IOException {
-        String ks = jobConf.get(AbstractColumnSerDe.CASSANDRA_KEYSPACE_NAME);
-        String cf = jobConf.get(AbstractColumnSerDe.CASSANDRA_CF_NAME);
-        int slicePredicateSize = jobConf.getInt(AbstractColumnSerDe.CASSANDRA_SLICE_PREDICATE_SIZE,
-                AbstractColumnSerDe.DEFAULT_SLICE_PREDICATE_SIZE);
+        String ks = jobConf.get(AbstractCassandraSerDe.CASSANDRA_KEYSPACE_NAME);
+        String cf = jobConf.get(AbstractCassandraSerDe.CASSANDRA_CF_NAME);
+        int slicePredicateSize = jobConf.getInt(AbstractCassandraSerDe.CASSANDRA_SLICE_PREDICATE_SIZE,
+                AbstractCassandraSerDe.DEFAULT_SLICE_PREDICATE_SIZE);
         int sliceRangeSize = jobConf.getInt(
-                AbstractColumnSerDe.CASSANDRA_RANGE_BATCH_SIZE,
-                AbstractColumnSerDe.DEFAULT_RANGE_BATCH_SIZE);
+                AbstractCassandraSerDe.CASSANDRA_RANGE_BATCH_SIZE,
+                AbstractCassandraSerDe.DEFAULT_RANGE_BATCH_SIZE);
         int splitSize = jobConf.getInt(
-                AbstractColumnSerDe.CASSANDRA_SPLIT_SIZE,
-                AbstractColumnSerDe.DEFAULT_SPLIT_SIZE);
-        String cassandraColumnMapping = jobConf.get(AbstractColumnSerDe.CASSANDRA_COL_MAPPING);
-        int rpcPort = jobConf.getInt(AbstractColumnSerDe.CASSANDRA_PORT, 9160);
-        String host = jobConf.get(AbstractColumnSerDe.CASSANDRA_HOST);
-        String partitioner = jobConf.get(AbstractColumnSerDe.CASSANDRA_PARTITIONER);
+                AbstractCassandraSerDe.CASSANDRA_SPLIT_SIZE,
+                AbstractCassandraSerDe.DEFAULT_SPLIT_SIZE);
+        String cassandraColumnMapping = jobConf.get(AbstractCassandraSerDe.CASSANDRA_COL_MAPPING);
+        int rpcPort = jobConf.getInt(AbstractCassandraSerDe.CASSANDRA_PORT, 9160);
+        String host = jobConf.get(AbstractCassandraSerDe.CASSANDRA_HOST);
+        String partitioner = jobConf.get(AbstractCassandraSerDe.CASSANDRA_PARTITIONER);
 
         if (cassandraColumnMapping == null) {
             throw new IOException("cassandra.columns.mapping required for Cassandra Table.");
@@ -269,7 +265,7 @@ public class HiveCassandraStandardColumnInputFormat extends InputFormat<BytesWri
         }
 
         ExprNodeDesc filterExpr = Utilities.deserializeExpression(filterExprSerialized, jobConf);
-        String encodedIndexedColumns = jobConf.get(AbstractColumnSerDe.CASSANDRA_INDEXED_COLUMNS);
+        String encodedIndexedColumns = jobConf.get(AbstractCassandraSerDe.CASSANDRA_INDEXED_COLUMNS);
         Set<ColumnDef> indexedColumns = CassandraPushdownPredicate.deserializeIndexedColumns(encodedIndexedColumns);
         if (indexedColumns.isEmpty()) {
             return null;

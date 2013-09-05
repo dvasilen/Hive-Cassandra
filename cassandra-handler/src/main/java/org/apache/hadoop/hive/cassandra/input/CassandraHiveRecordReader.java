@@ -1,27 +1,27 @@
 package org.apache.hadoop.hive.cassandra.input;
 
+import org.apache.cassandra.db.IColumn;
+import org.apache.cassandra.db.SuperColumn;
+import org.apache.cassandra.hadoop.ColumnFamilyRecordReader;
+import org.apache.cassandra.utils.ByteBufferUtil;
+import org.apache.hadoop.hive.cassandra.serde.CassandraColumnSerDe;
+import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.MapWritable;
+import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedMap;
 
-import org.apache.cassandra.db.IColumn;
-import org.apache.cassandra.db.SuperColumn;
-import org.apache.cassandra.hadoop.ColumnFamilyRecordReader;
-import org.apache.cassandra.utils.ByteBufferUtil;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hive.cassandra.serde.AbstractColumnSerDe;
-import org.apache.hadoop.io.BytesWritable;
-import org.apache.hadoop.io.MapWritable;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
-
 public class CassandraHiveRecordReader extends RecordReader<BytesWritable, MapWritable>
   implements org.apache.hadoop.mapred.RecordReader<BytesWritable, MapWritable> {
-  static final Log LOG = LogFactory.getLog(CassandraHiveRecordReader.class);
+  static final Logger LOG = LoggerFactory.getLogger(CassandraHiveRecordReader.class);
 
   private final boolean isTransposed;
   private final ColumnFamilyRecordReader cfrr;
@@ -31,10 +31,10 @@ public class CassandraHiveRecordReader extends RecordReader<BytesWritable, MapWr
   private BytesWritable currentKey = null;
   private final MapWritable currentValue = new MapWritable();
 
-  public static final BytesWritable keyColumn = new BytesWritable(AbstractColumnSerDe.CASSANDRA_KEY_COLUMN.getBytes());
-  public static final BytesWritable columnColumn = new BytesWritable(AbstractColumnSerDe.CASSANDRA_COLUMN_COLUMN.getBytes());
-  public static final BytesWritable subColumnColumn = new BytesWritable(AbstractColumnSerDe.CASSANDRA_SUBCOLUMN_COLUMN.getBytes());
-  public static final BytesWritable valueColumn = new BytesWritable(AbstractColumnSerDe.CASSANDRA_VALUE_COLUMN.getBytes());
+  public static final BytesWritable keyColumn = new BytesWritable(CassandraColumnSerDe.CASSANDRA_KEY_COLUMN.getBytes());
+  public static final BytesWritable columnColumn = new BytesWritable(CassandraColumnSerDe.CASSANDRA_COLUMN_COLUMN.getBytes());
+  public static final BytesWritable subColumnColumn = new BytesWritable(CassandraColumnSerDe.CASSANDRA_SUBCOLUMN_COLUMN.getBytes());
+  public static final BytesWritable valueColumn = new BytesWritable(CassandraColumnSerDe.CASSANDRA_VALUE_COLUMN.getBytes());
 
 
 

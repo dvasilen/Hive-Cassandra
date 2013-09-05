@@ -1,19 +1,15 @@
 package org.apache.hadoop.hive.cassandra.output;
 
+import org.apache.cassandra.thrift.*;
+import org.apache.hadoop.hive.cassandra.CassandraProxyClient;
+import org.apache.hadoop.hive.cassandra.serde.AbstractCassandraSerDe;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.thrift.TException;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.cassandra.thrift.ConsistencyLevel;
-import org.apache.cassandra.thrift.InvalidRequestException;
-import org.apache.cassandra.thrift.Mutation;
-import org.apache.cassandra.thrift.TimedOutException;
-import org.apache.cassandra.thrift.UnavailableException;
-import org.apache.hadoop.hive.cassandra.CassandraProxyClient;
-import org.apache.hadoop.hive.cassandra.serde.AbstractColumnSerDe;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.thrift.TException;
 
 public abstract class CassandraAbstractPut implements Put {
 
@@ -25,8 +21,8 @@ public abstract class CassandraAbstractPut implements Put {
    */
   protected int getBatchMutationSize(JobConf jc) {
     return jc.getInt(
-        AbstractColumnSerDe.CASSANDRA_BATCH_MUTATION_SIZE,
-        AbstractColumnSerDe.DEFAULT_BATCH_MUTATION_SIZE);
+            AbstractCassandraSerDe.CASSANDRA_BATCH_MUTATION_SIZE,
+            AbstractCassandraSerDe.DEFAULT_BATCH_MUTATION_SIZE);
   }
 
   /**
@@ -37,8 +33,8 @@ public abstract class CassandraAbstractPut implements Put {
    * @return cassandra consistency level
    */
   protected static ConsistencyLevel getConsistencyLevel(JobConf jc) {
-    String consistencyLevel = jc.get(AbstractColumnSerDe.CASSANDRA_CONSISTENCY_LEVEL,
-        AbstractColumnSerDe.DEFAULT_CONSISTENCY_LEVEL);
+    String consistencyLevel = jc.get(AbstractCassandraSerDe.CASSANDRA_CONSISTENCY_LEVEL,
+            AbstractCassandraSerDe.DEFAULT_CONSISTENCY_LEVEL);
     ConsistencyLevel level = null;
     try {
       level = ConsistencyLevel.valueOf(consistencyLevel);

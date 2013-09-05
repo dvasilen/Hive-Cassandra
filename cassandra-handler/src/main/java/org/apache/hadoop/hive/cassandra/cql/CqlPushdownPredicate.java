@@ -1,16 +1,10 @@
 package org.apache.hadoop.hive.cassandra.cql;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.CharacterCodingException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.apache.cassandra.exceptions.ConfigurationException;
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.TypeParser;
+import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.exceptions.SyntaxException;
 import org.apache.cassandra.thrift.*;
 import org.apache.cassandra.utils.ByteBufferUtil;
@@ -18,17 +12,13 @@ import org.apache.cassandra.utils.Hex;
 import org.apache.hadoop.hive.cassandra.CassandraClientHolder;
 import org.apache.hadoop.hive.cassandra.CassandraException;
 import org.apache.hadoop.hive.cassandra.CassandraProxyClient;
-import org.apache.hadoop.hive.cassandra.serde.AbstractColumnSerDe;
+import org.apache.hadoop.hive.cassandra.serde.AbstractCassandraSerDe;
 import org.apache.hadoop.hive.ql.exec.ExprNodeConstantEvaluator;
 import org.apache.hadoop.hive.ql.index.IndexPredicateAnalyzer;
 import org.apache.hadoop.hive.ql.index.IndexSearchCondition;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.plan.ExprNodeConstantDesc;
-import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPEqual;
-import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPEqualOrGreaterThan;
-import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPEqualOrLessThan;
-import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPGreaterThan;
-import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPLessThan;
+import org.apache.hadoop.hive.ql.udf.generic.*;
 import org.apache.hadoop.hive.serde2.ByteStream;
 import org.apache.hadoop.hive.serde2.lazy.ByteArrayRef;
 import org.apache.hadoop.hive.serde2.lazy.LazyCassandraUtils;
@@ -40,8 +30,13 @@ import org.apache.thrift.TSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class CqlPushdownPredicate {
 
@@ -114,7 +109,7 @@ public class CqlPushdownPredicate {
         logger.info("Encoded column def: " + encoded);
         hexStrings.add(encoded);
       }
-      return Joiner.on(AbstractColumnSerDe.DELIMITER).join(hexStrings);
+      return Joiner.on(AbstractCassandraSerDe.DELIMITER).join(hexStrings);
     } catch (TException e) {
       throw new RuntimeException(e);
     }
@@ -133,7 +128,7 @@ public class CqlPushdownPredicate {
       return columns;
     }
 
-    Iterable<String> strings = Splitter.on(AbstractColumnSerDe.DELIMITER).omitEmptyStrings().trimResults().split(serialized);
+    Iterable<String> strings = Splitter.on(AbstractCassandraSerDe.DELIMITER).omitEmptyStrings().trimResults().split(serialized);
     TDeserializer deserializer = new TDeserializer(new TBinaryProtocol.Factory());
     for (String encoded : strings) {
       ColumnDef column = new ColumnDef();

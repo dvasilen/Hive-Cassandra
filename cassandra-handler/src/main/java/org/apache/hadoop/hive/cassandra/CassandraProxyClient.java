@@ -48,8 +48,6 @@ public class CassandraProxyClient implements java.lang.reflect.InvocationHandler
 
   }
 
-  ;
-
   private static final Logger logger = Logger.getLogger(CassandraProxyClient.class);
 
   /**

@@ -1,7 +1,5 @@
 package org.apache.hadoop.hive.cassandra.input.cql;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.cassandra.serde.CassandraLazyFactory;
 import org.apache.hadoop.hive.serde2.lazy.ByteArrayRef;
 import org.apache.hadoop.hive.serde2.lazy.LazyObject;
@@ -13,17 +11,15 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class LazyCqlRow extends LazyStruct {
-  static final Log LOG = LogFactory.getLog(LazyCqlRow.class);
+  static final Logger LOG = LoggerFactory.getLogger(LazyCqlRow.class);
 
   private List<String> cassandraColumns;
   private List<Text> cassandraColumnsBB;

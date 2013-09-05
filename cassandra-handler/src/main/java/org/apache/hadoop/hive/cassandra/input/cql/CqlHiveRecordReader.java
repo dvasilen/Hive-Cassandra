@@ -2,15 +2,14 @@ package org.apache.hadoop.hive.cassandra.input.cql;
 
 import org.apache.cassandra.hadoop.cql3.CqlPagingRecordReader;
 import org.apache.cassandra.utils.ByteBufferUtil;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hive.cassandra.serde.cql.AbstractCqlSerDe;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -20,7 +19,7 @@ import java.util.Map;
 public class CqlHiveRecordReader extends RecordReader<MapWritable, MapWritable>
         implements org.apache.hadoop.mapred.RecordReader<MapWritable, MapWritable> {
 
-  static final Log LOG = LogFactory.getLog(CqlHiveRecordReader.class);
+  static final Logger LOG = LoggerFactory.getLogger(CqlHiveRecordReader.class);
 
   //private final boolean isTransposed;
   private final CqlPagingRecordReader cfrr;
@@ -29,12 +28,6 @@ public class CqlHiveRecordReader extends RecordReader<MapWritable, MapWritable>
   //private Iterator<IColumn> subColumnIterator = null;
   private MapWritable currentKey = null;
   private final MapWritable currentValue = new MapWritable();
-
-  public static final BytesWritable keyColumn = new BytesWritable(AbstractCqlSerDe.CASSANDRA_KEY_COLUMN.getBytes());
-  public static final BytesWritable columnColumn = new BytesWritable(AbstractCqlSerDe.CASSANDRA_COLUMN_COLUMN.getBytes());
-  public static final BytesWritable subColumnColumn = new BytesWritable(AbstractCqlSerDe.CASSANDRA_SUBCOLUMN_COLUMN.getBytes());
-  public static final BytesWritable valueColumn = new BytesWritable(AbstractCqlSerDe.CASSANDRA_VALUE_COLUMN.getBytes());
-
 
   public CqlHiveRecordReader(CqlPagingRecordReader cprr) { //, boolean isTransposed) {
     this.cfrr = cprr;
