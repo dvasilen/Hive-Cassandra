@@ -38,15 +38,15 @@ import java.util.List;
 import java.util.Set;
 
 @SuppressWarnings("deprecation")
-public class HiveCqlInputFormat extends InputFormat<MapWritable, MapWritable>
-        implements org.apache.hadoop.mapred.InputFormat<MapWritable, MapWritable> {
+public class HiveCqlInputFormat extends InputFormat<MapWritableComparable, MapWritable>
+        implements org.apache.hadoop.mapred.InputFormat<MapWritableComparable, MapWritable> {
 
   static final Logger LOG = LoggerFactory.getLogger(HiveCqlInputFormat.class);
 
   private final CqlPagingInputFormat cfif = new CqlPagingInputFormat();
 
   @Override
-  public RecordReader<MapWritable, MapWritable> getRecordReader(InputSplit split,
+  public RecordReader<MapWritableComparable, MapWritable> getRecordReader(InputSplit split,
                                                                 JobConf jobConf, final Reporter reporter) throws IOException {
     HiveCassandraStandardSplit cassandraSplit = (HiveCassandraStandardSplit) split;
 
@@ -197,7 +197,7 @@ public class HiveCqlInputFormat extends InputFormat<MapWritable, MapWritable>
 
 
   @Override
-  public org.apache.hadoop.mapreduce.RecordReader<MapWritable, MapWritable> createRecordReader(
+  public org.apache.hadoop.mapreduce.RecordReader<MapWritableComparable, MapWritable> createRecordReader(
           org.apache.hadoop.mapreduce.InputSplit arg0, TaskAttemptContext tac) throws IOException,
           InterruptedException {
 

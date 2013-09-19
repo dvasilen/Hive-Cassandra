@@ -16,8 +16,8 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Map;
 
-public class CqlHiveRecordReader extends RecordReader<MapWritable, MapWritable>
-        implements org.apache.hadoop.mapred.RecordReader<MapWritable, MapWritable> {
+public class CqlHiveRecordReader extends RecordReader<MapWritableComparable, MapWritable>
+        implements org.apache.hadoop.mapred.RecordReader<MapWritableComparable, MapWritable> {
 
   static final Logger LOG = LoggerFactory.getLogger(CqlHiveRecordReader.class);
 
@@ -26,7 +26,7 @@ public class CqlHiveRecordReader extends RecordReader<MapWritable, MapWritable>
   private Iterator<Map.Entry<String, ByteBuffer>> columnIterator = null;
   private Map.Entry<String, ByteBuffer> currentEntry;
   //private Iterator<IColumn> subColumnIterator = null;
-  private MapWritable currentKey = null;
+  private MapWritableComparable currentKey = null;
   private final MapWritable currentValue = new MapWritable();
 
   public CqlHiveRecordReader(CqlPagingRecordReader cprr) { //, boolean isTransposed) {
@@ -40,8 +40,8 @@ public class CqlHiveRecordReader extends RecordReader<MapWritable, MapWritable>
   }
 
   @Override
-  public MapWritable createKey() {
-    return new MapWritable();
+  public MapWritableComparable createKey() {
+    return new MapWritableComparable();
   }
 
   @Override
@@ -62,7 +62,7 @@ public class CqlHiveRecordReader extends RecordReader<MapWritable, MapWritable>
   public static int callCount = 0;
 
   @Override
-  public boolean next(MapWritable key, MapWritable value) throws IOException {
+  public boolean next(MapWritableComparable key, MapWritable value) throws IOException {
     if (!nextKeyValue()) {
       return false;
     }
@@ -77,7 +77,7 @@ public class CqlHiveRecordReader extends RecordReader<MapWritable, MapWritable>
   }
 
   @Override
-  public MapWritable getCurrentKey() {
+  public MapWritableComparable getCurrentKey() {
     return currentKey;
   }
 
@@ -118,8 +118,8 @@ public class CqlHiveRecordReader extends RecordReader<MapWritable, MapWritable>
     return next;
   }
 
-  private MapWritable mapToMapWritable(Map<String, ByteBuffer> map) {
-    MapWritable mw = new MapWritable();
+  private MapWritableComparable mapToMapWritable(Map<String, ByteBuffer> map) {
+    MapWritableComparable mw = new MapWritableComparable();
     for (Map.Entry<String, ByteBuffer> e : map.entrySet()) {
       mw.put(new Text(e.getKey()), convertByteBuffer(e.getValue()));
     }
