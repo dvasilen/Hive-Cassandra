@@ -1,8 +1,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.apache.hadoop.hive.cassandra</groupId>
-  <artifactId>hive-0.10.0-cassandra</artifactId>
-  <version>1.2.4</version>
+  <artifactId>hive-0.11.0-cassandra</artifactId>
+  <version>1.2.9</version>
   
   	<repositories>
 		<repository>
@@ -102,21 +102,21 @@
   		<dependency>
   			<groupId>org.apache.hive</groupId>
   			<artifactId>hive-serde</artifactId>
-  			<version>0.10.0</version>
+  			<version>0.11.0</version>
   			<type>jar</type>
   			<scope>compile</scope>
   		</dependency>
   		  		<dependency>
   			<groupId>org.apache.hive</groupId>
   			<artifactId>hive-exec</artifactId>
-  			<version>0.10.0</version>
+  			<version>0.11.0</version>
   			<type>jar</type>
   			<scope>compile</scope>
   		</dependency>
   		  		<dependency>
   			<groupId>org.apache.hive</groupId>
   			<artifactId>hive-metastore</artifactId>
-  			<version>0.10.0</version>
+  			<version>0.11.0</version>
   			<type>jar</type>
   			<scope>compile</scope>
   		</dependency>
@@ -124,7 +124,7 @@
   		<dependency>
   			<groupId>org.apache.cassandra</groupId>
   			<artifactId>cassandra-all</artifactId>
-  			<version>1.2.4</version>
+  			<version>1.2.9</version>
   			<type>jar</type>
   			<scope>provided</scope>
   		</dependency>
