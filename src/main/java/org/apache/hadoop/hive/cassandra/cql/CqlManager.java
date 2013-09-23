@@ -8,7 +8,7 @@ import org.apache.hadoop.hive.cassandra.CassandraProxyClient;
 import org.apache.hadoop.hive.cassandra.serde.AbstractCassandraSerDe;
 import org.apache.hadoop.hive.cassandra.serde.cql.CqlSerDe;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
-import org.apache.hadoop.hive.metastore.api.Constants;
+import org.apache.hadoop.hive.metastore.api.hive_metastoreConstants;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.thrift.TException;
@@ -217,10 +217,10 @@ public class CqlManager {
   public void createColumnFamily() throws MetaException {
     try {
       cch.getClient().set_keyspace(keyspace);
-        Properties properties = MetaStoreUtils.getSchema(tbl);
+        Properties properties = MetaStoreUtils.getTableMetadata(tbl);
 
-        String columnsStr = (String) properties.get(Constants.META_TABLE_COLUMNS);
-        String columnTypesStr = (String) properties.get(Constants.META_TABLE_COLUMN_TYPES);
+        String columnsStr = (String) properties.get(hive_metastoreConstants.META_TABLE_COLUMNS);
+        String columnTypesStr = (String) properties.get(hive_metastoreConstants.META_TABLE_COLUMN_TYPES);
 
         String[] columnNames = columnsStr.split(",");
         String[] columnTypes = columnTypesStr.split(":");
