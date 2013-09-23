@@ -98,3 +98,5 @@ WITH SERDEPROPERTIES("cassandra.cf.name" = "bankloan_10","cassandra.host"="<your
 TBLPROPERTIES ("cassandra.ks.name" = "test");
 
 select * from cassandra_bankloan_10;
+
+See http://www.datastax.com/docs/datastax_enterprise3.1/solutions/about_hive for other SERDE and TABLE properties.
