@@ -41,7 +41,7 @@ DROP TABLE IF EXISTS cassandra_users;
 
 CREATE EXTERNAL TABLE cassandra_users  (key string, first string, last string, age string)
 STORED BY 'org.apache.hadoop.hive.cassandra.CassandraStorageHandler'
-WITH SERDEPROPERTIES("cassandra.cf.name" = "users","cassandra.host"="<your_host>","cassandra.port" = "9160")
+WITH SERDEPROPERTIES("cassandra.cf.name" = "users","cassandra.host"="&lt;your_host&gt;","cassandra.port" = "9160")
 TBLPROPERTIES ("cassandra.ks.name" = "test");
 
 select * from cassandra_users;
@@ -94,7 +94,7 @@ DROP TABLE IF EXISTS cassandra_bankloan_10;
 
 CREATE EXTERNAL TABLE cassandra_bankloan_10 (row int, age string,ed string,employ string,address string,income string,debtinc string,creddebt string,othdebt string,default string)
 STORED BY 'org.apache.hadoop.hive.cassandra.cql.CqlStorageHandler'
-WITH SERDEPROPERTIES("cassandra.cf.name" = "bankloan_10","cassandra.host"="<your_host>","cassandra.port" = "9160")
+WITH SERDEPROPERTIES("cassandra.cf.name" = "bankloan_10","cassandra.host"="&lt;your_host&gt;","cassandra.port" = "9160")
 TBLPROPERTIES ("cassandra.ks.name" = "test");
 
 select * from cassandra_bankloan_10;
