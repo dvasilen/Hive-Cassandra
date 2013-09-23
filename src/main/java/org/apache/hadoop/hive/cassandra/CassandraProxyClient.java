@@ -27,9 +27,26 @@ import org.apache.thrift.transport.TTransportException;
 
 /**
  * A proxy client connects to cassandra backend server.
- *
  */
 public class CassandraProxyClient implements java.lang.reflect.InvocationHandler {
+
+  public enum ConnectionStrategy {
+
+    RANDOM(true),
+    ROUND_ROBIN(false),
+    STICKY(false);
+
+    private final Boolean value;
+
+    ConnectionStrategy(Boolean value) {
+      this.value = value;
+    }
+
+    public boolean getValue() {
+      return this.value;
+    }
+
+  }
 
   private static final Logger logger = Logger.getLogger(CassandraProxyClient.class);
 
@@ -72,20 +89,16 @@ public class CassandraProxyClient implements java.lang.reflect.InvocationHandler
   /**
    * Construct a proxy connection.
    *
-   * @param host
-   *          cassandra host
-   * @param port
-   *          cassandra port
-   * @param framed
-   *          true to used framed connection
-   * @param randomizeConnections
-   *          true if randomly choosing a server when connection fails; false to use round-robin
-   *          mechanism
+   * @param host                 cassandra host
+   * @param port                 cassandra port
+   * @param framed               true to used framed connection
+   * @param randomizeConnections true if randomly choosing a server when connection fails; false to use round-robin
+   *                             mechanism
    * @return a Brisk Client Interface
    * @throws IOException
    */
   public CassandraProxyClient(String host, int port, boolean framed, boolean randomizeConnections)
-      throws CassandraException {
+          throws CassandraException {
     this.host = host;
     this.port = port;
     this.lastUsedHost = host;
@@ -103,31 +116,33 @@ public class CassandraProxyClient implements java.lang.reflect.InvocationHandler
 
   /**
    * Return a handle to the proxied connection
+   *
    * @return
    */
   public Cassandra.Iface getProxyConnection() {
-      return (Cassandra.Iface) java.lang.reflect.Proxy.newProxyInstance(Cassandra.Client.class
-              .getClassLoader(),Cassandra.Client.class.getInterfaces(), this);
+    return (Cassandra.Iface) java.lang.reflect.Proxy.newProxyInstance(Cassandra.Client.class
+            .getClassLoader(), Cassandra.Client.class.getInterfaces(), this);
+  }
+
+  public CassandraClientHolder getClientHolder() {
+    return clientHolder;
   }
 
   /**
    * Delegates to close of {@link CassandraClientHolder#close()}
    */
   public void close() {
-      if (clientHolder != null)
-      {
-          clientHolder.close();
-      }
+    if (clientHolder != null) {
+      clientHolder.close();
+    }
   }
 
   /**
    * Create connection to a given host.
    *
-   * @param host
-   *          cassandra host
+   * @param host cassandra host
    * @return cassandra thrift client
-   * @throws CassandraException
-   *           error
+   * @throws CassandraException error
    */
   private CassandraClientHolder createConnection(String host) throws CassandraException {
     TSocket socket = new TSocket(host, port);
@@ -137,7 +152,6 @@ public class CassandraProxyClient implements java.lang.reflect.InvocationHandler
 
     return ch;
   }
-
 
 
   /**
@@ -179,7 +193,7 @@ public class CassandraProxyClient implements java.lang.reflect.InvocationHandler
       throw new CassandraException(e);
     } catch (TException e) {
       throw new CassandraException(e);
-    } catch (SchemaDisagreementException e){
+    } catch (SchemaDisagreementException e) {
       throw new CassandraException(e);
     }
 
@@ -192,13 +206,10 @@ public class CassandraProxyClient implements java.lang.reflect.InvocationHandler
    * However we need a keyspace to call describe_ring to get all servers from the ring.
    *
    * @return the temporary keyspace
-   * @throws InvalidRequestException
-   *           error
-   * @throws TException
-   *           error
+   * @throws InvalidRequestException     error
+   * @throws TException                  error
    * @throws SchemaDisagreementException
-   * @throws InterruptedException
-   *           error
+   * @throws InterruptedException        error
    */
   private KsDef createTmpKs() throws InvalidRequestException, TException, SchemaDisagreementException {
 
@@ -206,7 +217,7 @@ public class CassandraProxyClient implements java.lang.reflect.InvocationHandler
     stratOpts.put("replication_factor", "1");
 
     KsDef tmpKs = new KsDef("proxy_client_ks", "org.apache.cassandra.locator.SimpleStrategy",
-        Arrays.asList(new CfDef[] {})).setStrategy_options(stratOpts);
+            Arrays.asList(new CfDef[]{})).setStrategy_options(stratOpts);
 
     clientHolder.getClient().system_add_keyspace(tmpKs);
 
@@ -218,7 +229,6 @@ public class CassandraProxyClient implements java.lang.reflect.InvocationHandler
    *
    * @throws TException
    * @throws InvalidRequestException
-   *
    * @throws IOException
    */
   private void checkRing() throws CassandraException {
@@ -248,8 +258,7 @@ public class CassandraProxyClient implements java.lang.reflect.InvocationHandler
    * we should try the same server again in case that it recovers.
    * Otherwise, try to connect to a different server.
    *
-   * @throws error
-   *           when there is no server to connect from the ring.
+   * @throws CassandraException error when there is no server to connect from the ring.
    */
   private void attemptReconnect() throws CassandraException {
     String endpoint = nextServerGen.getNextServer(lastUsedHost);
@@ -296,14 +305,20 @@ public class CassandraProxyClient implements java.lang.reflect.InvocationHandler
       } catch (InvocationTargetException e) {
         // Error is from cassandra thrift server
         if (e.getTargetException() instanceof UnavailableException ||
-                  e.getTargetException() instanceof TimedOutException ||
-                  e.getTargetException() instanceof TTransportException) {
+                e.getTargetException() instanceof TimedOutException ||
+                e.getTargetException() instanceof TTransportException) {
           // These errors seem due to not being able to connect the cassandra server.
           // If this is last try quit the program; otherwise keep trying.
           if (tries >= maxAttempts) {
             throw e.getCause();
           }
         } else {
+          String argsList = "";
+          for (Object arg : args) {
+            argsList = arg.toString() + "\n";
+          }
+          //logger.info("SOME UNKNOWN EXCEPTION EXECUTING: \n " + m + " on " + proxy + " with " + argsList);
+          //logger.error(e.getMessage(), e);
           // The other errors, we should not keep trying.
           throw e.getCause();
         }
@@ -315,7 +330,6 @@ public class CassandraProxyClient implements java.lang.reflect.InvocationHandler
 
   /**
    * A class to implement the method of getting the next servers from the ring.
-   *
    */
   public abstract class RingConnOption {
     protected List<String> servers;
@@ -336,8 +350,7 @@ public class CassandraProxyClient implements java.lang.reflect.InvocationHandler
      * server tried last time;
      * if there is no server that is different from the server tried last time, return null;
      *
-     * @param the
-     *          last host used for connection
+     * @param host the last host used for connection
      * @return next server for connection
      */
     public String getNextServer(String host) throws CassandraException {
@@ -358,13 +371,12 @@ public class CassandraProxyClient implements java.lang.reflect.InvocationHandler
 
     /**
      * Retrieve the next server from the ring.
-     *
+     * <p/>
      * In the constructor, all servers from the ring are hashed and mapped. Theoretically there
      * should be no duplicated server
      * in the ring.
      *
-     * @param host
-     *          the last host used for connection
+     * @param host the last host used for connection
      * @return new server for connection
      */
     protected abstract String getServerFromRing(String host);

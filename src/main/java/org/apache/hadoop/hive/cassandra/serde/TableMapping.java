@@ -29,8 +29,7 @@ import org.apache.hadoop.io.Writable;
 public abstract class TableMapping {
   /* names of columns from SerdeParameters */
   protected final List<String> cassandraColumnNames;
-  /* index of key column in results */
-  protected final int iKey;
+
   protected final String cassandraColumnFamily;
 
   private boolean useJSONSerialize;
@@ -42,10 +41,9 @@ public abstract class TableMapping {
   private final boolean[] needsEscape; // which chars need to be escaped. This array should have size
 
 
-  TableMapping(String colFamily, List<String> columnNames, SerDeParameters serdeParams) {
+  protected TableMapping(String colFamily, List<String> columnNames, SerDeParameters serdeParams) {
     this.cassandraColumnFamily = colFamily;
     this.cassandraColumnNames = columnNames;
-    this.iKey = cassandraColumnNames.indexOf(AbstractColumnSerDe.CASSANDRA_KEY_COLUMN);
 
     separators = serdeParams.getSeparators();
     escaped = serdeParams.isEscaped();
@@ -53,19 +51,7 @@ public abstract class TableMapping {
     needsEscape = serdeParams.getNeedsEscape();
   }
 
-  public Writable getWritable(
-      List<? extends StructField> fields,
-      List<Object> list,
-      List<? extends StructField> declaredFields) throws IOException {
-    assert iKey >= 0;
-    //First get the cassandra row key
-    byte[] keyBytes = serializeToBytes(iKey, fields, list, declaredFields);
-
-    return write(keyBytes, fields, list, declaredFields);
-  }
-
-  public abstract Writable write(
-      byte[] keyBytes,
+  public abstract Writable getWritable(
       List<? extends StructField> fields,
       List<Object> list,
       List<? extends StructField> declaredFields) throws IOException;
@@ -107,7 +93,6 @@ public abstract class TableMapping {
   /**
    * Serialize a object into bytes.
    * @param foi object inspector
-   * @param decalred output object inspector
    * @param obj object to be serialized
    * @param useJsonSerialize true to use json serialization
    * @return object in serialized bytes

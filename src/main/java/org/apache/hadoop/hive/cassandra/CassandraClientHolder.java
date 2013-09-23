@@ -60,6 +60,7 @@ public class CassandraClientHolder
     /**
      * Set the client with the (potentially) new keyspace. Safe to call this
      * repeatedly with the same keyspace.
+     * @param keyspace
      * @return
      * @throws CassandraException
      */
@@ -119,5 +120,8 @@ public class CassandraClientHolder
             }
         }
     }
+
+
+
 
 }

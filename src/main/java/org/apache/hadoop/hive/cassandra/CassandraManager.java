@@ -1,19 +1,17 @@
 package org.apache.hadoop.hive.cassandra;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.cassandra.thrift.CfDef;
-import org.apache.cassandra.thrift.InvalidRequestException;
-import org.apache.cassandra.thrift.KsDef;
-import org.apache.cassandra.thrift.NotFoundException;
-import org.apache.cassandra.thrift.SchemaDisagreementException;
-import org.apache.hadoop.hive.cassandra.serde.AbstractColumnSerDe;
+import org.apache.cassandra.thrift.*;
+import org.apache.hadoop.hive.cassandra.serde.AbstractCassandraSerDe;
+import org.apache.hadoop.hive.cassandra.serde.CassandraColumnSerDe;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.thrift.TException;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A class to handle the transaction to cassandra backend database.
@@ -50,22 +48,22 @@ public class CassandraManager {
   public CassandraManager(Table tbl) throws MetaException {
     Map<String, String> serdeParam = tbl.getSd().getSerdeInfo().getParameters();
 
-    String cassandraHost = serdeParam.get(AbstractColumnSerDe.CASSANDRA_HOST);
+    String cassandraHost = serdeParam.get(AbstractCassandraSerDe.CASSANDRA_HOST);
     if (cassandraHost == null) {
-      cassandraHost = AbstractColumnSerDe.DEFAULT_CASSANDRA_HOST;
+      cassandraHost = AbstractCassandraSerDe.DEFAULT_CASSANDRA_HOST;
     }
 
     this.host = cassandraHost;
 
-    String cassandraPortStr = serdeParam.get(AbstractColumnSerDe.CASSANDRA_PORT);
+    String cassandraPortStr = serdeParam.get(AbstractCassandraSerDe.CASSANDRA_PORT);
     if (cassandraPortStr == null) {
-      cassandraPortStr = AbstractColumnSerDe.DEFAULT_CASSANDRA_PORT;
+      cassandraPortStr = AbstractCassandraSerDe.DEFAULT_CASSANDRA_PORT;
     }
 
     try {
       port = Integer.parseInt(cassandraPortStr);
     } catch (NumberFormatException e) {
-      throw new MetaException(AbstractColumnSerDe.CASSANDRA_PORT + " must be a number");
+      throw new MetaException(AbstractCassandraSerDe.CASSANDRA_PORT + " must be a number");
     }
 
     this.tbl = tbl;
@@ -104,7 +102,6 @@ public class CassandraManager {
   /**
    * Return a keyspace description for the given keyspace name from the cassandra host.
    *
-   * @param keyspace keyspace name
    * @return keyspace description
    */
   public KsDef getKeyspaceDesc()
@@ -154,9 +151,13 @@ public class CassandraManager {
     try {
       KsDef ks = new KsDef();
       ks.setName(getCassandraKeyspace());
-      ks.setReplication_factor(getReplicationFactor());
       ks.setStrategy_class(getStrategy());
 
+      if (!ks.isSetStrategy_options())
+        ks.setStrategy_options(new HashMap<String, String>());
+      
+      ks.putToStrategy_options("replication_factor", Integer.toString(getReplicationFactor()));
+    
       ks.addToCf_defs(getCfDef());
 
       clientHolder.getProxyConnection().system_add_keyspace(ks);
@@ -213,10 +214,10 @@ public class CassandraManager {
   }
 
   private String getColumnType() throws MetaException {
-    String prop = getPropertyFromTable(AbstractColumnSerDe.CASSANDRA_COL_MAPPING);
+    String prop = getPropertyFromTable(AbstractCassandraSerDe.CASSANDRA_COL_MAPPING);
     List<String> mapping;
     if (prop != null) {
-      mapping = AbstractColumnSerDe.parseColumnMapping(prop);
+      mapping = CassandraColumnSerDe.parseColumnMapping(prop);
     } else {
       List<FieldSchema> schema = tbl.getSd().getCols();
       if (schema.size() ==0) {
@@ -228,7 +229,7 @@ public class CassandraManager {
         colNames[i] = schema.get(i).getName();
       }
 
-      String mappingStr = AbstractColumnSerDe.createColumnMappingString(colNames);
+      String mappingStr = CassandraColumnSerDe.createColumnMappingString(colNames);
       mapping = Arrays.asList(mappingStr.split(","));
     }
 
@@ -238,13 +239,13 @@ public class CassandraManager {
     boolean hasSubColumn = false;
 
     for (String column : mapping) {
-      if (column.equalsIgnoreCase(AbstractColumnSerDe.CASSANDRA_KEY_COLUMN)) {
+      if (column.equalsIgnoreCase(CassandraColumnSerDe.CASSANDRA_KEY_COLUMN)) {
           hasKey = true;
-      } else if (column.equalsIgnoreCase(AbstractColumnSerDe.CASSANDRA_COLUMN_COLUMN)) {
+      } else if (column.equalsIgnoreCase(CassandraColumnSerDe.CASSANDRA_COLUMN_COLUMN)) {
           hasColumn = true;
-      } else if (column.equalsIgnoreCase(AbstractColumnSerDe.CASSANDRA_SUBCOLUMN_COLUMN)) {
+      } else if (column.equalsIgnoreCase(CassandraColumnSerDe.CASSANDRA_SUBCOLUMN_COLUMN)) {
         hasSubColumn = true;
-      } else if (column.equalsIgnoreCase(AbstractColumnSerDe.CASSANDRA_VALUE_COLUMN)) {
+      } else if (column.equalsIgnoreCase(CassandraColumnSerDe.CASSANDRA_VALUE_COLUMN)) {
         hasValue = true;
       } else {
         return "Standard";
@@ -268,14 +269,14 @@ public class CassandraManager {
    * @throws MetaException error
    */
   private int getReplicationFactor() throws MetaException {
-    String prop = getPropertyFromTable(AbstractColumnSerDe.CASSANDRA_KEYSPACE_REPFACTOR);
+    String prop = getPropertyFromTable(AbstractCassandraSerDe.CASSANDRA_KEYSPACE_REPFACTOR);
     if (prop == null) {
       return DEFAULT_REPLICATION_FACTOR;
     } else {
       try {
         return Integer.parseInt(prop);
       } catch (NumberFormatException e) {
-        throw new MetaException(AbstractColumnSerDe.CASSANDRA_KEYSPACE_REPFACTOR + " must be a number");
+        throw new MetaException(AbstractCassandraSerDe.CASSANDRA_KEYSPACE_REPFACTOR + " must be a number");
       }
     }
   }
@@ -286,7 +287,7 @@ public class CassandraManager {
    * @return strategy
    */
   private String getStrategy() {
-    String prop = getPropertyFromTable(AbstractColumnSerDe.CASSANDRA_KEYSPACE_STRATEGY);
+    String prop = getPropertyFromTable(AbstractCassandraSerDe.CASSANDRA_KEYSPACE_STRATEGY);
     if (prop == null) {
       return DEFAULT_STRATEGY;
     } else {
@@ -300,13 +301,13 @@ public class CassandraManager {
    * @return keyspace name
    */
   private String getCassandraKeyspace() {
-    String tableName = getPropertyFromTable(AbstractColumnSerDe.CASSANDRA_KEYSPACE_NAME);
+    String tableName = getPropertyFromTable(AbstractCassandraSerDe.CASSANDRA_KEYSPACE_NAME);
 
     if (tableName == null) {
       tableName = tbl.getDbName();
     }
 
-    tbl.getParameters().put(AbstractColumnSerDe.CASSANDRA_KEYSPACE_NAME, tableName);
+    tbl.getParameters().put(AbstractCassandraSerDe.CASSANDRA_KEYSPACE_NAME, tableName);
 
     return tableName;
   }
@@ -317,13 +318,13 @@ public class CassandraManager {
    * @return cassandra column family name
    */
   private String getCassandraColumnFamily() {
-    String tableName = getPropertyFromTable(AbstractColumnSerDe.CASSANDRA_CF_NAME);
+    String tableName = getPropertyFromTable(AbstractCassandraSerDe.CASSANDRA_CF_NAME);
 
     if (tableName == null) {
       tableName = tbl.getTableName();
     }
 
-    tbl.getParameters().put(AbstractColumnSerDe.CASSANDRA_CF_NAME, tableName);
+    tbl.getParameters().put(AbstractCassandraSerDe.CASSANDRA_CF_NAME, tableName);
 
     return tableName;
   }

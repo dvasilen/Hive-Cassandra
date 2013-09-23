@@ -1,9 +1,10 @@
-package org.apache.hadoop.hive.cassandra.output;
+package org.apache.hadoop.hive.cassandra.output.cql;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.cassandra.CassandraException;
 import org.apache.hadoop.hive.cassandra.CassandraProxyClient;
+import org.apache.hadoop.hive.cassandra.output.Put;
 import org.apache.hadoop.hive.cassandra.serde.AbstractCassandraSerDe;
 import org.apache.hadoop.hive.ql.exec.FileSinkOperator.RecordWriter;
 import org.apache.hadoop.hive.ql.io.HiveOutputFormat;
@@ -19,15 +20,15 @@ import java.io.IOException;
 import java.util.Properties;
 
 @SuppressWarnings("deprecation")
-public class HiveCassandraOutputFormat implements HiveOutputFormat<Text, CassandraPut>,
-    OutputFormat<Text, CassandraPut> {
+public class HiveCqlOutputFormat implements HiveOutputFormat<Text, CqlPut>,
+        OutputFormat<Text, CqlPut> {
 
-  static final Logger LOG = LoggerFactory.getLogger(HiveCassandraOutputFormat.class);
+  static final Logger LOG = LoggerFactory.getLogger(HiveCqlOutputFormat.class);
 
   @Override
   public RecordWriter getHiveRecordWriter(final JobConf jc, Path finalOutPath,
-      Class<? extends Writable> valueClass, boolean isCompressed, Properties tableProperties,
-      Progressable progress) throws IOException {
+                                          Class<? extends Writable> valueClass, boolean isCompressed, Properties tableProperties,
+                                          Progressable progress) throws IOException {
 
     final String cassandraKeySpace = jc.get(AbstractCassandraSerDe.CASSANDRA_KEYSPACE_NAME);
     final String cassandraHost = jc.get(AbstractCassandraSerDe.CASSANDRA_HOST);
@@ -36,7 +37,7 @@ public class HiveCassandraOutputFormat implements HiveOutputFormat<Text, Cassand
     final CassandraProxyClient client;
     try {
       client = new CassandraProxyClient(
-        cassandraHost, cassandraPort, true, true);
+              cassandraHost, cassandraPort, true, true);
     } catch (CassandraException e) {
       throw new IOException(e);
     }
@@ -65,8 +66,8 @@ public class HiveCassandraOutputFormat implements HiveOutputFormat<Text, Cassand
   }
 
   @Override
-  public org.apache.hadoop.mapred.RecordWriter<Text, CassandraPut> getRecordWriter(FileSystem arg0,
-      JobConf arg1, String arg2, Progressable arg3) throws IOException {
+  public org.apache.hadoop.mapred.RecordWriter<Text, CqlPut> getRecordWriter(FileSystem arg0,
+                                                                             JobConf arg1, String arg2, Progressable arg3) throws IOException {
     throw new RuntimeException("Error: Hive should not invoke this method.");
   }
 }
