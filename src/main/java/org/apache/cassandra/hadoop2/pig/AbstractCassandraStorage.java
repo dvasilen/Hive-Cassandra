@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.hadoop.pig;
+package org.apache.cassandra.hadoop2.pig;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -36,7 +36,7 @@ import org.apache.cassandra.db.Column;
 import org.apache.cassandra.db.IColumn;
 import org.apache.cassandra.db.marshal.*;
 import org.apache.cassandra.db.marshal.AbstractCompositeType.CompositeComponent;
-import org.apache.cassandra.hadoop.*;
+import org.apache.cassandra.hadoop2.*;
 import org.apache.cassandra.thrift.*;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.FBUtilities;
@@ -97,7 +97,7 @@ public abstract class AbstractCassandraStorage extends LoadFunc implements Store
     protected String outputFormatClass;
     protected int splitSize = 64 * 1024;
     protected String partitionerClass;
-    protected boolean usePartitionFilter = false; 
+    protected boolean usePartitionFilter = false;
 
     public AbstractCassandraStorage()
     {
@@ -209,7 +209,7 @@ public abstract class AbstractCassandraStorage extends LoadFunc implements Store
                 {
                     validator = TypeParser.parse(cd.getValidation_class());
                     if (validator instanceof CounterColumnType)
-                        validator = LongType.instance; 
+                        validator = LongType.instance;
                     validators.put(cd.name, validator);
                 }
                 catch (ConfigurationException e)
@@ -259,7 +259,7 @@ public abstract class AbstractCassandraStorage extends LoadFunc implements Store
     }
 
     /** decompose the query to store the parameters in a map */
-    public static Map<String, String> getQueryMap(String query) throws UnsupportedEncodingException 
+    public static Map<String, String> getQueryMap(String query) throws UnsupportedEncodingException
     {
         String[] params = query.split("&");
         Map<String, String> map = new HashMap<String, String>();
@@ -317,7 +317,7 @@ public abstract class AbstractCassandraStorage extends LoadFunc implements Store
     /** get the full class name */
     protected String getFullyQualifiedClassName(String classname)
     {
-        return classname.contains(".") ? classname : "org.apache.cassandra.hadoop." + classname;
+        return classname.contains(".") ? classname : "org.apache.cassandra.hadoop2." + classname;
     }
 
     /** get pig type for the cassandra data type*/
@@ -415,7 +415,7 @@ public abstract class AbstractCassandraStorage extends LoadFunc implements Store
                     return objToListOrSetBB(objects.subList(1, objects.size()));
                 else if ("map".equalsIgnoreCase(collectionType))
                     return objToMapBB(objects.subList(1, objects.size()));
-                   
+
             }
             return objToCompositeBB(objects);
         }
@@ -430,7 +430,7 @@ public abstract class AbstractCassandraStorage extends LoadFunc implements Store
         {
             ByteBuffer buffer = objToBB(sub);
             serialized.add(buffer);
-        }      
+        }
         return CollectionType.pack(serialized, objects.size());
     }
 
@@ -445,7 +445,7 @@ public abstract class AbstractCassandraStorage extends LoadFunc implements Store
                 ByteBuffer buffer = objToBB(entry);
                 serialized.add(buffer);
             }
-        } 
+        }
         return CollectionType.pack(serialized, objects.size());
     }
 
@@ -769,7 +769,7 @@ public abstract class AbstractCassandraStorage extends LoadFunc implements Store
 
                 logger.debug("partition keys: {}", keyString);
                 keyNames = FBUtilities.fromJsonList(keyString);
-     
+
                 iterator = keyNames.iterator();
                 while (iterator.hasNext())
                 {

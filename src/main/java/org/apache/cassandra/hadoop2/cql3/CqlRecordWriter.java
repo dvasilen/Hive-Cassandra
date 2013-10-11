@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.hadoop.cql3;
+package org.apache.cassandra.hadoop2.cql3;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -37,9 +37,9 @@ import org.apache.cassandra.dht.Range;
 import org.apache.cassandra.dht.Token;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.exceptions.SyntaxException;
-import org.apache.cassandra.hadoop.AbstractColumnFamilyRecordWriter;
-import org.apache.cassandra.hadoop.ConfigHelper;
-import org.apache.cassandra.hadoop.Progressable;
+import org.apache.cassandra.hadoop2.AbstractColumnFamilyRecordWriter;
+import org.apache.cassandra.hadoop2.ConfigHelper;
+import org.apache.cassandra.hadoop2.Progressable;
 import org.apache.cassandra.thrift.*;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.FBUtilities;
@@ -51,7 +51,7 @@ import org.apache.thrift.transport.TTransport;
 /**
  * The <code>ColumnFamilyRecordWriter</code> maps the output &lt;key, value&gt;
  * pairs to a Cassandra column family. In particular, it applies the binded variables
- * in the value to the prepared statement, which it associates with the key, and in 
+ * in the value to the prepared statement, which it associates with the key, and in
  * turn the responsible endpoint.
  *
  * <p>
@@ -123,7 +123,7 @@ final class CqlRecordWriter extends AbstractColumnFamilyRecordWriter<Map<String,
             throw new RuntimeException(e);
         }
     }
-    
+
     @Override
     public void close() throws IOException
     {
@@ -144,7 +144,7 @@ final class CqlRecordWriter extends AbstractColumnFamilyRecordWriter<Map<String,
         if (clientException != null)
             throw clientException;
     }
-    
+
     /**
      * If the key is to be associated with a valid value, a mutation is created
      * for it with the given column family and columns. In the event the value
@@ -199,7 +199,7 @@ final class CqlRecordWriter extends AbstractColumnFamilyRecordWriter<Map<String,
         {
             super(endpoints);
          }
-        
+
         /**
          * Loops collecting cql binded variable values from the queue and sending to Cassandra
          */
@@ -231,13 +231,13 @@ final class CqlRecordWriter extends AbstractColumnFamilyRecordWriter<Map<String,
                         {
                             client.execute_prepared_cql3_query(itemId, bindVariables, ConsistencyLevel.ONE);
                             i++;
-                            
+
                             if (i >= batchThreshold)
                                 break;
-                            
+
                             bindVariables = queue.poll();
                         }
-                        
+
                         break;
                     }
                     catch (Exception e)
@@ -334,7 +334,7 @@ final class CqlRecordWriter extends AbstractColumnFamilyRecordWriter<Map<String,
         Column rawKeyValidator = result.rows.get(0).columns.get(0);
         String validator = ByteBufferUtil.string(ByteBuffer.wrap(rawKeyValidator.getValue()));
         keyValidator = parseType(validator);
-        
+
         Column rawPartitionKeys = result.rows.get(0).columns.get(1);
         String keyString = ByteBufferUtil.string(ByteBuffer.wrap(rawPartitionKeys.getValue()));
         logger.debug("partition keys: " + keyString);
@@ -360,8 +360,8 @@ final class CqlRecordWriter extends AbstractColumnFamilyRecordWriter<Map<String,
         clusterColumns = FBUtilities.fromJsonList(clusterColumnString);
     }
 
-    /** 
-     * retrieve the fake partition keys and cluster keys for classic thrift table 
+    /**
+     * retrieve the fake partition keys and cluster keys for classic thrift table
      * use CFDefinition to get keys and columns
      * */
     private void retrieveKeysForThriftTables(Cassandra.Client client) throws Exception
@@ -384,12 +384,12 @@ final class CqlRecordWriter extends AbstractColumnFamilyRecordWriter<Map<String,
                 }
                 clusterColumns = new ArrayList<String>();
                 for (ColumnIdentifier column : cfDefinition.columns.keySet())
-                    clusterColumns.add(column.toString()); 
+                    clusterColumns.add(column.toString());
                 return;
             }
         }
     }
-    
+
     private AbstractType<?> parseType(String type) throws ConfigurationException
     {
         try

@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.hadoop;
+package org.apache.cassandra.hadoop2;
 
 
 import java.io.IOException;
@@ -50,7 +50,7 @@ final class ColumnFamilyRecordWriter extends AbstractColumnFamilyRecordWriter<By
 {
     // handles for clients for each range running in the threadpool
     private final Map<Range, RangeClient> clients;
-    
+
     /**
      * Upon construction, obtain the map that this writer will use to collect
      * mutations, and the ring cache for the given keyspace.
@@ -75,7 +75,7 @@ final class ColumnFamilyRecordWriter extends AbstractColumnFamilyRecordWriter<By
         super(conf);
         this.clients = new HashMap<Range, RangeClient>();
     }
-    
+
     @Override
     public void close() throws IOException
     {
@@ -95,7 +95,7 @@ final class ColumnFamilyRecordWriter extends AbstractColumnFamilyRecordWriter<By
         if (clientException != null)
             throw clientException;
     }
-    
+
     /**
      * If the key is to be associated with a valid value, a mutation is created
      * for it with the given column family and columns. In the event the value
@@ -137,7 +137,7 @@ final class ColumnFamilyRecordWriter extends AbstractColumnFamilyRecordWriter<By
     public class RangeClient extends AbstractRangeClient<Pair<ByteBuffer, Mutation>>
     {
         public final String columnFamily = ConfigHelper.getOutputColumnFamily(conf);
-        
+
         /**
          * Constructs an {@link RangeClient} for the given endpoints.
          * @param endpoints the possible endpoints to execute the mutations on
@@ -146,7 +146,7 @@ final class ColumnFamilyRecordWriter extends AbstractColumnFamilyRecordWriter<By
         {
             super(endpoints);
          }
-        
+
         /**
          * Loops collecting mutations from the queue and sending to Cassandra
          */

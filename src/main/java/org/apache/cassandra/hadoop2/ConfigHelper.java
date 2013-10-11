@@ -1,4 +1,4 @@
-package org.apache.cassandra.hadoop;
+package org.apache.cassandra.hadoop2;
 /*
  *
  * Licensed to the Apache Software Foundation (ASF) under one

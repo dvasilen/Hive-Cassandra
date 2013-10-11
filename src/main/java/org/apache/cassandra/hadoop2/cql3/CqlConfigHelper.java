@@ -1,4 +1,4 @@
-package org.apache.cassandra.hadoop.cql3;
+package org.apache.cassandra.hadoop2.cql3;
 /*
 *
 * Licensed to the Apache Software Foundation (ASF) under one

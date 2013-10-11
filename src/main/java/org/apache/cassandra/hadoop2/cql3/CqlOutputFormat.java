@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.hadoop.cql3;
+package org.apache.cassandra.hadoop2.cql3;
 
 
 import java.io.IOException;
@@ -23,10 +23,10 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.cassandra.hadoop.AbstractColumnFamilyOutputFormat;
-import org.apache.cassandra.hadoop.ColumnFamilyInputFormat;
-import org.apache.cassandra.hadoop.ConfigHelper;
-import org.apache.cassandra.hadoop.Progressable;
+import org.apache.cassandra.hadoop2.AbstractColumnFamilyOutputFormat;
+import org.apache.cassandra.hadoop2.ColumnFamilyInputFormat;
+import org.apache.cassandra.hadoop2.ConfigHelper;
+import org.apache.cassandra.hadoop2.Progressable;
 import org.apache.hadoop.mapreduce.*;
 
 /**

@@ -15,12 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.hadoop;
+package org.apache.cassandra.hadoop2;
 
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -29,7 +28,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.cassandra.client.RingCache;
 import org.apache.cassandra.thrift.*;
 import org.apache.cassandra.utils.FBUtilities;
-import org.apache.cassandra.utils.Pair;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -78,7 +76,7 @@ public abstract class AbstractColumnFamilyRecordWriter<K, Y> extends RecordWrite
         batchThreshold = conf.getLong(AbstractColumnFamilyOutputFormat.BATCH_THRESHOLD, 32);
         consistencyLevel = ConsistencyLevel.valueOf(ConfigHelper.getWriteConsistencyLevel(conf));
     }
-    
+
     /**
      * Close this <code>RecordWriter</code> to future operations, but not before
      * flushing out the batched mutations.
@@ -97,7 +95,7 @@ public abstract class AbstractColumnFamilyRecordWriter<K, Y> extends RecordWrite
     {
         close();
     }
-    
+
     protected abstract void close() throws IOException;
 
     /**

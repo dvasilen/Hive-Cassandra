@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.hadoop;
+package org.apache.cassandra.hadoop2;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -218,7 +218,7 @@ public class ColumnFamilyRecordReader extends RecordReader<ByteBuffer, SortedMap
         {
             try
             {
-                partitioner = FBUtilities.newPartitioner(client.describe_partitioner());           
+                partitioner = FBUtilities.newPartitioner(client.describe_partitioner());
                 // get CF meta data
                 String query = "SELECT comparator," +
                                "       subcomparator " +

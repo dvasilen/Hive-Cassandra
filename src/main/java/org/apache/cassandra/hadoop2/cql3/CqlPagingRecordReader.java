@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.hadoop.cql3;
+package org.apache.cassandra.hadoop2.cql3;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -40,8 +40,8 @@ import org.apache.cassandra.db.marshal.TypeParser;
 import org.apache.cassandra.dht.IPartitioner;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.exceptions.SyntaxException;
-import org.apache.cassandra.hadoop.ColumnFamilySplit;
-import org.apache.cassandra.hadoop.ConfigHelper;
+import org.apache.cassandra.hadoop2.ColumnFamilySplit;
+import org.apache.cassandra.hadoop2.ConfigHelper;
 import org.apache.cassandra.thrift.*;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.FBUtilities;
@@ -247,7 +247,7 @@ public class CqlPagingRecordReader extends RecordReader<Map<String, ByteBuffer>,
         {
             value.clear();
             value.putAll(getCurrentValue());
-            
+
             keys.clear();
             keys.putAll(getCurrentKey());
 
@@ -689,7 +689,7 @@ public class CqlPagingRecordReader extends RecordReader<Map<String, ByteBuffer>,
             clusterColumns.add(new BoundColumn(key));
 
         parseKeyValidators(ByteBufferUtil.string(ByteBuffer.wrap(cqlRow.columns.get(2).getValue())));
-        
+
         Column rawComparator = cqlRow.columns.get(3);
         String comparator = ByteBufferUtil.string(ByteBuffer.wrap(rawComparator.getValue()));
         logger.debug("comparator: {}", comparator);
@@ -705,8 +705,8 @@ public class CqlPagingRecordReader extends RecordReader<Map<String, ByteBuffer>,
         }
     }
 
-    /** 
-     * retrieve the fake partition keys and cluster keys for classic thrift table 
+    /**
+     * retrieve the fake partition keys and cluster keys for classic thrift table
      * use CFDefinition to get keys and columns
      * */
     private void retrieveKeysForThriftTables() throws Exception
@@ -800,7 +800,7 @@ public class CqlPagingRecordReader extends RecordReader<Map<String, ByteBuffer>,
             this.name = name;
         }
     }
-    
+
     /** get string from a ByteBuffer, catch the exception and throw it as runtime exception*/
     private static String stringValue(ByteBuffer value)
     {

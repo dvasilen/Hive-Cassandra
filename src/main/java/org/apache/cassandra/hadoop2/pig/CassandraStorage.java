@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.hadoop.pig;
+package org.apache.cassandra.hadoop2.pig;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -26,7 +26,7 @@ import java.util.*;
 import org.apache.cassandra.db.IColumn;
 import org.apache.cassandra.db.marshal.*;
 import org.apache.cassandra.exceptions.ConfigurationException;
-import org.apache.cassandra.hadoop.*;
+import org.apache.cassandra.hadoop2.*;
 import org.apache.cassandra.thrift.*;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.FBUtilities;
@@ -68,7 +68,7 @@ public class CassandraStorage extends AbstractCassandraStorage
 
     private boolean widerows = false;
     private int limit;
-    
+
     // wide row hacks
     private ByteBuffer lastKey;
     private Map<ByteBuffer,IColumn> lastRow;
@@ -84,8 +84,8 @@ public class CassandraStorage extends AbstractCassandraStorage
     {
         super();
         this.limit = limit;
-        DEFAULT_INPUT_FORMAT = "org.apache.cassandra.hadoop.ColumnFamilyInputFormat";
-        DEFAULT_OUTPUT_FORMAT = "org.apache.cassandra.hadoop.ColumnFamilyOutputFormat";
+        DEFAULT_INPUT_FORMAT = "org.apache.cassandra.hadoop2.ColumnFamilyInputFormat";
+        DEFAULT_OUTPUT_FORMAT = "org.apache.cassandra.hadoop2.ColumnFamilyOutputFormat";
     }
 
     public int getLimit()
@@ -103,7 +103,7 @@ public class CassandraStorage extends AbstractCassandraStorage
     {
         CfDef cfDef = getCfDef(loadSignature);
         ByteBuffer key = null;
-        Tuple tuple = null; 
+        Tuple tuple = null;
         DefaultDataBag bag = new DefaultDataBag();
         try
         {
@@ -291,8 +291,8 @@ public class CassandraStorage extends AbstractCassandraStorage
             catch (NumberFormatException e)
             {
                 throw new RuntimeException("PIG_INPUT_SPLIT_SIZE is not a number", e);
-            }           
-        } 
+            }
+        }
 
         if (usePartitionFilter && getIndexExpressions() != null)
             ConfigHelper.setInputRange(conf, getIndexExpressions());
@@ -323,7 +323,7 @@ public class CassandraStorage extends AbstractCassandraStorage
     public void setStoreLocation(String location, Job job) throws IOException
     {
         conf = job.getConfiguration();
-        
+
         // don't combine mappers to a single mapper per node
         conf.setBoolean("pig.noSplitCombination", true);
         setLocationFromUri(location);
@@ -428,7 +428,7 @@ public class CassandraStorage extends AbstractCassandraStorage
 
                 innerTupleSchema.setFields(new ResourceFieldSchema[] { idxColSchema, valSchema });
                 allSchemaFields.add(innerTupleField);
-            }   
+            }
         }
 
         // bag at the end for unknown columns
@@ -697,11 +697,11 @@ public class CassandraStorage extends AbstractCassandraStorage
     }
 
     /** get a list of column for the column family */
-    protected List<ColumnDef> getColumnMetadata(Cassandra.Client client, boolean cql3Table) 
-            throws InvalidRequestException, 
-            UnavailableException, 
-            TimedOutException, 
-            SchemaDisagreementException, 
+    protected List<ColumnDef> getColumnMetadata(Cassandra.Client client, boolean cql3Table)
+            throws InvalidRequestException,
+            UnavailableException,
+            TimedOutException,
+            SchemaDisagreementException,
             TException,
             CharacterCodingException,
             org.apache.cassandra.exceptions.InvalidRequestException,
@@ -710,7 +710,7 @@ public class CassandraStorage extends AbstractCassandraStorage
     {
         if (cql3Table)
             return new ArrayList<ColumnDef>();
-        
+
         return getColumnMeta(client, true);
     }
 
@@ -745,7 +745,7 @@ public class CassandraStorage extends AbstractCassandraStorage
         {
             if (!location.startsWith("cassandra://"))
                 throw new Exception("Bad scheme." + location);
-            
+
             String[] urlParts = location.split("\\?");
             if (urlParts.length > 1)
             {

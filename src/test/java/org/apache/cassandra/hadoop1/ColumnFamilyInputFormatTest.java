@@ -24,7 +24,7 @@ package org.apache.cassandra.hadoop1;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.cassandra.hadoop.ConfigHelper;
+import org.apache.cassandra.hadoop2.ConfigHelper;
 
 import org.apache.cassandra.thrift.SlicePredicate;
 import org.apache.cassandra.utils.ByteBufferUtil;
