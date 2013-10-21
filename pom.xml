@@ -4,7 +4,7 @@
     <prerequisites><maven>${maven.version.minimum}</maven></prerequisites>
     <groupId>com.github.cassandra-hadoop</groupId>
     <artifactId>cassandra-hadoop</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.2</version>
     <packaging>jar</packaging>
 
 
@@ -43,6 +43,6 @@
   <scm>
     <connection>scm:git:https://github.com/michaelsembwever/cassandra-hadoop.git</connection>
     <url>https://github.com/michaelsembwever/cassandra-hadoop</url>
-    <tag>HEAD</tag>
+    <tag>cassandra-hadoop-0.2</tag>
   </scm>
 </project>
