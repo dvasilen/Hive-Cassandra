@@ -22,8 +22,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.auth.IAuthenticator;
 import org.apache.cassandra.thrift.*;
@@ -59,7 +59,7 @@ public abstract class AbstractColumnFamilyOutputFormat<K, Y> extends OutputForma
 {
     public static final String BATCH_THRESHOLD = "mapreduce.output.columnfamilyoutputformat.batch.threshold";
     public static final String QUEUE_SIZE = "mapreduce.output.columnfamilyoutputformat.queue.size";
-    private static final Logger logger = LoggerFactory.getLogger(AbstractColumnFamilyOutputFormat.class);
+    //private static final Logger logger = LoggerFactory.getLogger(AbstractColumnFamilyOutputFormat.class);
 
 
     /**
@@ -119,7 +119,7 @@ public abstract class AbstractColumnFamilyOutputFormat<K, Y> extends OutputForma
      */
     public static Cassandra.Client createAuthenticatedClient(String host, int port, Configuration conf) throws Exception
     {
-        logger.debug("Creating authenticated client for CF output format");
+        // logger.debug("Creating authenticated client for CF output format");
         TTransport transport = ConfigHelper.getClientTransportFactory(conf).openTransport(host, port, conf);
         TProtocol binaryProtocol = new TBinaryProtocol(transport, true, true);
         Cassandra.Client client = new Cassandra.Client(binaryProtocol);
@@ -132,7 +132,7 @@ public abstract class AbstractColumnFamilyOutputFormat<K, Y> extends OutputForma
             AuthenticationRequest authRequest = new AuthenticationRequest(creds);
             client.login(authRequest);
         }
-        logger.debug("Authenticated client for CF output format created successfully");
+        // logger.debug("Authenticated client for CF output format created successfully");
         return client;
     }
 

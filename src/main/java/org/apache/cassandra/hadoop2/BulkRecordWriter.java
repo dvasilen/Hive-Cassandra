@@ -26,8 +26,8 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.auth.IAuthenticator;
 import org.apache.cassandra.config.Config;
@@ -57,7 +57,7 @@ implements org.apache.hadoop.mapred.RecordWriter<ByteBuffer,List<Mutation>>
     private final static String STREAM_THROTTLE_MBITS = "mapreduce.output.bulkoutputformat.streamthrottlembits";
     private final static String MAX_FAILED_HOSTS = "mapreduce.output.bulkoutputformat.maxfailedhosts";
     private final Configuration conf;
-    private final Logger logger = LoggerFactory.getLogger(BulkRecordWriter.class);
+    //private final Logger logger = LoggerFactory.getLogger(BulkRecordWriter.class);
     private SSTableSimpleUnsortedWriter writer;
     private SSTableLoader loader;
     private File outputdir;
@@ -242,8 +242,9 @@ implements org.apache.hadoop.mapred.RecordWriter<ByteBuffer,List<Mutation>>
             {
                 if (future.getFailedHosts().size() > maxFailures)
                     throw new IOException("Too many hosts failed: " + future.getFailedHosts());
-                else
-                    logger.warn("Some hosts failed: " + future.getFailedHosts());
+                else {
+                    // logger.warn("Some hosts failed: " + future.getFailedHosts());
+				}
             }
         }
     }

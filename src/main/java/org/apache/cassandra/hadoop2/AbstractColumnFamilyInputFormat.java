@@ -53,8 +53,8 @@ import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TTransport;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -62,7 +62,7 @@ import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
 
 public abstract class AbstractColumnFamilyInputFormat<K, Y> extends InputFormat<K, Y> implements org.apache.hadoop.mapred.InputFormat<K, Y>
 {
-    private static final Logger logger = LoggerFactory.getLogger(AbstractColumnFamilyInputFormat.class);
+    //private static final Logger logger = LoggerFactory.getLogger(AbstractColumnFamilyInputFormat.class);
 
     public static final String MAPRED_TASK_ID = "mapred.task.id";
     // The simple fact that we need this is because the old Hadoop API wants us to "write"
@@ -90,7 +90,7 @@ public abstract class AbstractColumnFamilyInputFormat<K, Y> extends InputFormat<
 
     public static Cassandra.Client createAuthenticatedClient(String location, int port, Configuration conf) throws Exception
     {
-        logger.debug("Creating authenticated client for CF input format");
+        //logger.debug("Creating authenticated client for CF input format");
         TTransport transport = ConfigHelper.getClientTransportFactory(conf).openTransport(location, port, conf);
         TProtocol binaryProtocol = new TBinaryProtocol(transport, true, true);
         Cassandra.Client client = new Cassandra.Client(binaryProtocol);
@@ -105,7 +105,7 @@ public abstract class AbstractColumnFamilyInputFormat<K, Y> extends InputFormat<
             AuthenticationRequest authRequest = new AuthenticationRequest(creds);
             client.login(authRequest);
         }
-        logger.debug("Authenticated client for CF input format created successfully");
+        // logger.debug("Authenticated client for CF input format created successfully");
         return client;
     }
 
@@ -121,7 +121,7 @@ public abstract class AbstractColumnFamilyInputFormat<K, Y> extends InputFormat<
         keyspace = ConfigHelper.getInputKeyspace(context.getConfiguration());
         cfName = ConfigHelper.getInputColumnFamily(context.getConfiguration());
         partitioner = ConfigHelper.getInputPartitioner(context.getConfiguration());
-        logger.debug("partitioner is " + partitioner);
+        // logger.debug("partitioner is " + partitioner);
 
         // cannonical ranges, split into pieces, fetching the splits in parallel
         ExecutorService executor = Executors.newCachedThreadPool();
@@ -136,7 +136,7 @@ public abstract class AbstractColumnFamilyInputFormat<K, Y> extends InputFormat<
             {
                 if (jobKeyRange.start_key == null)
                 {
-                    logger.warn("ignoring jobKeyRange specified without start_key");
+                    // logger.warn("ignoring jobKeyRange specified without start_key");
                 }
                 else
                 {
@@ -254,7 +254,7 @@ public abstract class AbstractColumnFamilyInputFormat<K, Y> extends InputFormat<
                                     subSplit.getRow_count(),
                                     endpoints);
 
-                    logger.debug("adding " + split);
+                    // logger.debug("adding " + split);
                     splits.add(split);
                 }
             }
@@ -294,7 +294,7 @@ public abstract class AbstractColumnFamilyInputFormat<K, Y> extends InputFormat<
             }
             catch (IOException e)
             {
-                logger.debug("failed connect to endpoint " + host, e);
+                // logger.debug("failed connect to endpoint " + host, e);
             }
             catch (InvalidRequestException e)
             {

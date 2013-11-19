@@ -26,8 +26,8 @@ import java.util.*;
 
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Iterables;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.config.CFMetaData;
 import org.apache.cassandra.cql3.CFDefinition;
@@ -64,7 +64,7 @@ import org.apache.thrift.transport.TTransport;
 public class CqlPagingRecordReader extends RecordReader<Map<String, ByteBuffer>, Map<String, ByteBuffer>>
         implements org.apache.hadoop.mapred.RecordReader<Map<String, ByteBuffer>, Map<String, ByteBuffer>>
 {
-    private static final Logger logger = LoggerFactory.getLogger(CqlPagingRecordReader.class);
+    //private static final Logger logger = LoggerFactory.getLogger(CqlPagingRecordReader.class);
 
     public static final int DEFAULT_CQL_PAGE_LIMIT = 1000; // TODO: find the number large enough but not OOM
 
@@ -152,7 +152,7 @@ public class CqlPagingRecordReader extends RecordReader<Map<String, ByteBuffer>,
 
         rowIterator = new RowIterator();
 
-        logger.debug("created {}", rowIterator);
+        // logger.debug("created {}", rowIterator);
     }
 
     public void close()
@@ -190,7 +190,7 @@ public class CqlPagingRecordReader extends RecordReader<Map<String, ByteBuffer>,
     {
         if (!rowIterator.hasNext())
         {
-            logger.debug("Finished scanning {} rows (estimate was: {})", rowIterator.totalRead, totalRowCount);
+            // logger.debug("Finished scanning {} rows (estimate was: {})", rowIterator.totalRead, totalRowCount);
             return false;
         }
 
@@ -299,18 +299,18 @@ public class CqlPagingRecordReader extends RecordReader<Map<String, ByteBuffer>,
                 // no more data
                 if (index == -1 || emptyPartitionKeyValues())
                 {
-                    logger.debug("no more data");
+                    //logger.debug("no more data");
                     return endOfData();
                 }
 
                 index = setTailNull(clusterColumns);
-                logger.debug("set tail to null, index: {}", index);
+                //logger.debug("set tail to null, index: {}", index);
                 executeQuery();
                 pageRows = 0;
 
                 if (rows == null || !rows.hasNext() && index < 0)
                 {
-                    logger.debug("no more data");
+                    //logger.debug("no more data");
                     return endOfData();
                 }
             }
@@ -322,7 +322,7 @@ public class CqlPagingRecordReader extends RecordReader<Map<String, ByteBuffer>,
             for (Column column : row.columns)
             {
                 String columnName = stringValue(ByteBuffer.wrap(column.getName()));
-                logger.debug("column: {}", columnName);
+          //      logger.debug("column: {}", columnName);
 
                 if (i < partitionBoundColumns.size() + clusterColumns.size())
                     keyColumns.put(stringValue(column.name), column.value);
@@ -374,7 +374,7 @@ public class CqlPagingRecordReader extends RecordReader<Map<String, ByteBuffer>,
                     rowKey = rowKey + column.validator.getString(ByteBufferUtil.clone(iter.next())) + ":";
             }
 
-            logger.debug("previous RowKey: {}, new row key: {}", previousRowKey, rowKey);
+    // logger.debug("previous RowKey: {}, new row key: {}", previousRowKey, rowKey);
             if (previousRowKey == null)
             {
                 this.previousRowKey = rowKey;
@@ -404,7 +404,7 @@ public class CqlPagingRecordReader extends RecordReader<Map<String, ByteBuffer>,
                 {
                     int index = previousIndex > 0 ? previousIndex : 0;
                     BoundColumn column = values.get(index);
-                    logger.debug("set key {} value to  null", column.name);
+                    //logger.debug("set key {} value to  null", column.name);
                     column.value = null;
                     return previousIndex - 1;
                 }
@@ -413,7 +413,7 @@ public class CqlPagingRecordReader extends RecordReader<Map<String, ByteBuffer>,
             }
 
             BoundColumn column = values.get(previousIndex);
-            logger.debug("set key {} value to  null", column.name);
+            //logger.debug("set key {} value to  null", column.name);
             column.value = null;
             return previousIndex - 1;
         }
@@ -587,7 +587,7 @@ public class CqlPagingRecordReader extends RecordReader<Map<String, ByteBuffer>,
 
             Pair<Integer, String> query = null;
             query = composeQuery(columns);
-            logger.debug("type: {}, query: {}", query.left, query.right);
+            // logger.debug("type: {}, query: {}", query.left, query.right);
             CqlPreparedResult cqlPreparedResult = client.prepare_cql3_query(ByteBufferUtil.bytes(query.right), Compression.NONE);
             preparedQueryIds.put(query.left, cqlPreparedResult.itemId);
             return cqlPreparedResult.itemId;
@@ -603,7 +603,7 @@ public class CqlPagingRecordReader extends RecordReader<Map<String, ByteBuffer>,
         private void executeQuery()
         {
             Pair<Integer, List<ByteBuffer>> bindValues = preparedQueryBindValues();
-            logger.debug("query type: {}", bindValues.left);
+            // logger.debug("query type: {}", bindValues.left);
 
             // check whether it reach end of range for type 1 query CASSANDRA-5573
             if (bindValues.left == 1 && reachEndRange())
@@ -670,7 +670,7 @@ public class CqlPagingRecordReader extends RecordReader<Map<String, ByteBuffer>,
 
         CqlRow cqlRow = result.rows.get(0);
         String keyString = ByteBufferUtil.string(ByteBuffer.wrap(cqlRow.columns.get(0).getValue()));
-        logger.debug("partition keys: {}", keyString);
+        // logger.debug("partition keys: {}", keyString);
         List<String> keys = FBUtilities.fromJsonList(keyString);
 
         for (String key : keys)
@@ -682,7 +682,7 @@ public class CqlPagingRecordReader extends RecordReader<Map<String, ByteBuffer>,
         }
 
         keyString = ByteBufferUtil.string(ByteBuffer.wrap(cqlRow.columns.get(1).getValue()));
-        logger.debug("cluster columns: {}", keyString);
+        // logger.debug("cluster columns: {}", keyString);
         keys = FBUtilities.fromJsonList(keyString);
 
         for (String key : keys)
@@ -692,7 +692,7 @@ public class CqlPagingRecordReader extends RecordReader<Map<String, ByteBuffer>,
 
         Column rawComparator = cqlRow.columns.get(3);
         String comparator = ByteBufferUtil.string(ByteBuffer.wrap(rawComparator.getValue()));
-        logger.debug("comparator: {}", comparator);
+        // logger.debug("comparator: {}", comparator);
         AbstractType comparatorValidator = parseType(comparator);
         if (comparatorValidator instanceof CompositeType)
         {
@@ -729,7 +729,7 @@ public class CqlPagingRecordReader extends RecordReader<Map<String, ByteBuffer>,
     /** parse key validators */
     private void parseKeyValidators(String rowKeyValidator) throws IOException
     {
-        logger.debug("row key validator: {} ", rowKeyValidator);
+        // logger.debug("row key validator: {} ", rowKeyValidator);
         keyValidator = parseType(rowKeyValidator);
 
         if (keyValidator instanceof CompositeType)
@@ -764,7 +764,7 @@ public class CqlPagingRecordReader extends RecordReader<Map<String, ByteBuffer>,
 
         String endToken = split.getEndToken();
         String currentToken = partitioner.getToken(rowKey).toString();
-        logger.debug("End token: {}, current token: {}", endToken, currentToken);
+  //logger.debug("End token: {}, current token: {}", endToken, currentToken);
 
         return endToken.equals(currentToken);
     }

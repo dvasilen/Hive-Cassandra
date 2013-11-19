@@ -23,8 +23,8 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.config.CFMetaData;
 import org.apache.cassandra.cql3.CFDefinition;
@@ -64,7 +64,7 @@ import org.apache.thrift.transport.TTransport;
  */
 final class CqlRecordWriter extends AbstractColumnFamilyRecordWriter<Map<String, ByteBuffer>, List<ByteBuffer>>
 {
-    private static final Logger logger = LoggerFactory.getLogger(CqlRecordWriter.class);
+    //private static final Logger logger = LoggerFactory.getLogger(CqlRecordWriter.class);
 
     // handles for clients for each range running in the threadpool
     private final Map<Range, RangeClient> clients;
@@ -337,7 +337,7 @@ final class CqlRecordWriter extends AbstractColumnFamilyRecordWriter<Map<String,
 
         Column rawPartitionKeys = result.rows.get(0).columns.get(1);
         String keyString = ByteBufferUtil.string(ByteBuffer.wrap(rawPartitionKeys.getValue()));
-        logger.debug("partition keys: " + keyString);
+        // logger.debug("partition keys: " + keyString);
 
         List<String> keys = FBUtilities.fromJsonList(keyString);
         if (keys.isEmpty())
@@ -356,7 +356,7 @@ final class CqlRecordWriter extends AbstractColumnFamilyRecordWriter<Map<String,
         Column rawClusterColumns = result.rows.get(0).columns.get(2);
         String clusterColumnString = ByteBufferUtil.string(ByteBuffer.wrap(rawClusterColumns.getValue()));
 
-        logger.debug("cluster columns: " + clusterColumnString);
+        // logger.debug("cluster columns: " + clusterColumnString);
         clusterColumns = FBUtilities.fromJsonList(clusterColumnString);
     }
 

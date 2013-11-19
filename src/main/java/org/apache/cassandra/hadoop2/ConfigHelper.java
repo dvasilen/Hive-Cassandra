@@ -25,8 +25,8 @@ import java.util.*;
 
 import com.google.common.collect.Maps;
 import org.apache.cassandra.io.compress.CompressionParameters;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.dht.IPartitioner;
@@ -74,7 +74,7 @@ public class ConfigHelper
     private static final String OUTPUT_TRANSPORT_FACTORY_CLASS = "cassandra.output.transport.factory.class";
     private static final String THRIFT_FRAMED_TRANSPORT_SIZE_IN_MB = "cassandra.thrift.framed.size_mb";
 
-    private static final Logger logger = LoggerFactory.getLogger(ConfigHelper.class);
+    //private static final Logger logger = LoggerFactory.getLogger(ConfigHelper.class);
 
 
     /**
@@ -552,10 +552,10 @@ public class ConfigHelper
         }
         if (client == null)
         {
-            logger.error("failed to connect to any initial addresses");
+            // logger.error("failed to connect to any initial addresses");
             for (IOException ioe : exceptions)
             {
-                logger.error("", ioe);
+                // logger.error("", ioe);
             }
             throw exceptions.get(exceptions.size() - 1);
         }

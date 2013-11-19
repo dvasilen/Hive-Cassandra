@@ -24,8 +24,8 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import com.google.common.collect.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.db.IColumn;
@@ -46,7 +46,7 @@ import org.apache.thrift.transport.TTransport;
 public class ColumnFamilyRecordReader extends RecordReader<ByteBuffer, SortedMap<ByteBuffer, IColumn>>
     implements org.apache.hadoop.mapred.RecordReader<ByteBuffer, SortedMap<ByteBuffer, IColumn>>
 {
-    private static final Logger logger = LoggerFactory.getLogger(ColumnFamilyRecordReader.class);
+    //private static final Logger logger = LoggerFactory.getLogger(ColumnFamilyRecordReader.class);
 
     public static final int CASSANDRA_HADOOP_MAX_KEY_SIZE_DEFAULT = 8192;
 
@@ -163,14 +163,14 @@ public class ColumnFamilyRecordReader extends RecordReader<ByteBuffer, SortedMap
         }
 
         iter = widerows ? new WideRowIterator() : new StaticRowIterator();
-        logger.debug("created {}", iter);
+        // logger.debug("created {}", iter);
     }
 
     public boolean nextKeyValue() throws IOException
     {
         if (!iter.hasNext())
         {
-            logger.debug("Finished scanning " + iter.rowsRead() + " rows (estimate was: " + totalRowCount + ")");
+            // logger.debug("Finished scanning " + iter.rowsRead() + " rows (estimate was: " + totalRowCount + ")");
             return false;
         }
 
@@ -426,7 +426,7 @@ public class ColumnFamilyRecordReader extends RecordReader<ByteBuffer, SortedMap
             else
             {
                 KeySlice lastRow = Iterables.getLast(rows);
-                logger.debug("Starting with last-seen row {}", lastRow.key);
+                // logger.debug("Starting with last-seen row {}", lastRow.key);
                 keyRange = new KeyRange(batchSize)
                           .setStart_key(lastRow.key)
                           .setEnd_token(split.getEndToken())
@@ -439,8 +439,8 @@ public class ColumnFamilyRecordReader extends RecordReader<ByteBuffer, SortedMap
                 int n = 0;
                 for (KeySlice row : rows)
                     n += row.columns.size();
-                logger.debug("read {} columns in {} rows for {} starting with {}",
-                             new Object[]{ n, rows.size(), keyRange, lastColumn });
+                //logger.debug("read {} columns in {} rows for {} starting with {}",
+                 //            new Object[]{ n, rows.size(), keyRange, lastColumn });
 
                 wideColumns = Iterators.peekingIterator(new WideColumnIterator(rows));
                 if (wideColumns.hasNext() && wideColumns.peek().right.keySet().iterator().next().equals(lastColumn))

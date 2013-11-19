@@ -141,14 +141,6 @@
             <version>2.0.2-alpha</version>
         </dependency>		
 		
-		<dependency>
-			<groupId>com.github.cassandra-hadoop</groupId>
-			<artifactId>cassandra-hadoop</artifactId>
-			<version>0.3-SNAPSHOT</version>
-			<scope>system</scope>
-			<systemPath>C:/Git/michaelsembwever-cassandra-hadoop/target/cassandra-hadoop-0.3-SNAPSHOT.jar</systemPath>
-		</dependency>		
-		
   		<dependency>
   			<groupId>org.apache.hbase</groupId>
   			<artifactId>hbase</artifactId>
