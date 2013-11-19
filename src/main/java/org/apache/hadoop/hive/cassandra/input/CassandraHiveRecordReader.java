@@ -2,7 +2,7 @@ package org.apache.hadoop.hive.cassandra.input;
 
 import org.apache.cassandra.db.IColumn;
 import org.apache.cassandra.db.SuperColumn;
-import org.apache.cassandra.hadoop.ColumnFamilyRecordReader;
+import org.apache.cassandra.hadoop2.ColumnFamilyRecordReader;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.hadoop.hive.cassandra.serde.CassandraColumnSerDe;
 import org.apache.hadoop.io.BytesWritable;

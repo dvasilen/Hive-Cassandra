@@ -1,6 +1,6 @@
 package org.apache.hadoop.hive.cassandra.input.cql;
 
-import org.apache.cassandra.hadoop.ColumnFamilyRecordReader;
+import org.apache.cassandra.hadoop2.ColumnFamilyRecordReader;
 import org.apache.hadoop.hive.serde2.lazy.LazyMap;
 import org.apache.hadoop.hive.serde2.lazy.LazyObject;
 import org.apache.hadoop.hive.serde2.lazy.LazyPrimitive;

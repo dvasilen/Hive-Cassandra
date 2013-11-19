@@ -1,6 +1,6 @@
 package org.apache.hadoop.hive.cassandra.input.cql;
 
-import org.apache.cassandra.hadoop.cql3.CqlPagingRecordReader;
+import org.apache.cassandra.hadoop2.cql3.CqlPagingRecordReader;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.MapWritable;

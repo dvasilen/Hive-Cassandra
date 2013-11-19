@@ -5,10 +5,10 @@ import org.apache.cassandra.db.marshal.BytesType;
 import org.apache.cassandra.db.marshal.TypeParser;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.exceptions.SyntaxException;
-import org.apache.cassandra.hadoop.ColumnFamilyInputFormat;
-import org.apache.cassandra.hadoop.ColumnFamilyRecordReader;
-import org.apache.cassandra.hadoop.ColumnFamilySplit;
-import org.apache.cassandra.hadoop.ConfigHelper;
+import org.apache.cassandra.hadoop2.ColumnFamilyInputFormat;
+import org.apache.cassandra.hadoop2.ColumnFamilyRecordReader;
+import org.apache.cassandra.hadoop2.ColumnFamilySplit;
+import org.apache.cassandra.hadoop2.ConfigHelper;
 import org.apache.cassandra.thrift.ColumnDef;
 import org.apache.cassandra.thrift.IndexExpression;
 import org.apache.cassandra.thrift.SlicePredicate;
@@ -31,6 +31,7 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.mapreduce.task.*;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,10 +66,10 @@ public class HiveCassandraStandardColumnInputFormat extends InputFormat<BytesWri
             throw new IOException("Cannot read more columns than the given table contains.");
         }
 
-        org.apache.cassandra.hadoop.ColumnFamilySplit cfSplit = cassandraSplit.getSplit();
+        org.apache.cassandra.hadoop2.ColumnFamilySplit cfSplit = cassandraSplit.getSplit();
         Job job = new Job(jobConf);
 
-        TaskAttemptContext tac = new TaskAttemptContext(job.getConfiguration(), new TaskAttemptID()) {
+        TaskAttemptContext tac = new TaskAttemptContextImpl(job.getConfiguration(), new TaskAttemptID()) {
             @Override
             public void progress() {
                 reporter.progress();
@@ -182,7 +183,7 @@ public class HiveCassandraStandardColumnInputFormat extends InputFormat<BytesWri
         ConfigHelper.setInputSplitSize(jobConf, splitSize);
 
         Job job = new Job(jobConf);
-        JobContext jobContext = new JobContext(job.getConfiguration(), job.getJobID());
+        JobContext jobContext = new JobContextImpl(job.getConfiguration(), job.getJobID());
 
         Path[] tablePaths = FileInputFormat.getInputPaths(jobContext);
         List<org.apache.hadoop.mapreduce.InputSplit> splits = getSplits(jobContext);
