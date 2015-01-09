@@ -231,11 +231,7 @@ public abstract class AbstractColumnFamilyInputFormat<K, Y> extends InputFormat<
                 String endpoint_address = endpoint;
                 if (endpoint_address == null || endpoint_address.equals("0.0.0.0"))
                     endpoint_address = range.endpoints.get(endpointIndex);
-                endpoints[endpointIndex] = InetAddress.getByName(endpoint_address).getHostName();
-                // hadoop needs fully-qualified hostname
-                if(!endpoints[endpointIndex].endsWith("."))
-                    endpoints[endpointIndex] = endpoints[endpointIndex] + ".";
-                endpointIndex++;
+                endpoints[endpointIndex++] = InetAddress.getByName(endpoint_address).getHostName();
             }
 
             Token.TokenFactory factory = partitioner.getTokenFactory();
