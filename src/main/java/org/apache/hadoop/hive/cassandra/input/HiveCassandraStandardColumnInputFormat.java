@@ -1,5 +1,6 @@
 package org.apache.hadoop.hive.cassandra.input;
 
+import org.apache.hadoop.hive.cassandra.HiveCompatibilityUtils;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.BytesType;
 import org.apache.cassandra.db.marshal.TypeParser;
@@ -60,7 +61,7 @@ public class HiveCassandraStandardColumnInputFormat extends InputFormat<BytesWri
         isTransposed = CassandraColumnSerDe.isTransposed(columns);
 
 
-        List<Integer> readColIDs = ColumnProjectionUtils.getReadColumnIDs(jobConf);
+        List<Integer> readColIDs = HiveCompatibilityUtils.getReadColumnIDs(jobConf);
 
         if (columns.size() < readColIDs.size()) {
             throw new IOException("Cannot read more columns than the given table contains.");
@@ -265,7 +266,7 @@ public class HiveCassandraStandardColumnInputFormat extends InputFormat<BytesWri
             return null;
         }
 
-        ExprNodeDesc filterExpr = Utilities.deserializeExpression(filterExprSerialized, jobConf);
+        ExprNodeDesc filterExpr = Utilities.deserializeExpression(filterExprSerialized/*, jobConf*/);
         String encodedIndexedColumns = jobConf.get(AbstractCassandraSerDe.CASSANDRA_INDEXED_COLUMNS);
         Set<ColumnDef> indexedColumns = CassandraPushdownPredicate.deserializeIndexedColumns(encodedIndexedColumns);
         if (indexedColumns.isEmpty()) {

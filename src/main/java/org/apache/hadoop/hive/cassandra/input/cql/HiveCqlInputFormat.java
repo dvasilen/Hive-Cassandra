@@ -1,5 +1,6 @@
 package org.apache.hadoop.hive.cassandra.input.cql;
 
+import org.apache.hadoop.hive.cassandra.HiveCompatibilityUtils;
 import org.apache.cassandra.hadoop2.ColumnFamilySplit;
 import org.apache.cassandra.hadoop2.ConfigHelper;
 import org.apache.cassandra.hadoop2.cql3.CqlPagingInputFormat;
@@ -54,7 +55,7 @@ public class HiveCqlInputFormat extends InputFormat<MapWritableComparable, MapWr
     List<String> columns = CqlSerDe.parseColumnMapping(cassandraSplit.getColumnMapping());
 
 
-    List<Integer> readColIDs = ColumnProjectionUtils.getReadColumnIDs(jobConf);
+    List<Integer> readColIDs = HiveCompatibilityUtils.getReadColumnIDs(jobConf);
 
     if (columns.size() < readColIDs.size()) {
       throw new IOException("Cannot read more columns than the given table contains.");
@@ -225,7 +226,7 @@ public class HiveCqlInputFormat extends InputFormat<MapWritableComparable, MapWr
       return null;
     }
 
-    ExprNodeDesc filterExpr = Utilities.deserializeExpression(filterExprSerialized, jobConf);
+    ExprNodeDesc filterExpr = Utilities.deserializeExpression(filterExprSerialized/*, jobConf*/);
     String encodedIndexedColumns = jobConf.get(AbstractCassandraSerDe.CASSANDRA_INDEXED_COLUMNS);
     Set<ColumnDef> indexedColumns = CassandraPushdownPredicate.deserializeIndexedColumns(encodedIndexedColumns);
     if (indexedColumns.isEmpty()) {
