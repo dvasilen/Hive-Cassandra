@@ -67,8 +67,8 @@ public class CqlRegularTableMapping extends TableMapping {
                         serialize(entry.getKey(), koi, koi, 3);
 
                         // Get the column-qualifier
-                        byte[] columnQualifier = new byte[serializeStream.getCount()];
-                        System.arraycopy(serializeStream.getData(), 0, columnQualifier, 0, serializeStream.getCount());
+                        byte[] columnQualifier = new byte[serializeStream.getLength()];
+                        System.arraycopy(serializeStream.getData(), 0, columnQualifier, 0, serializeStream.getLength());
 
                         // Get the Value
                         serializeStream.reset();
@@ -77,8 +77,8 @@ public class CqlRegularTableMapping extends TableMapping {
                         if (!isNotNull) {
                             continue;
                         }
-                        byte[] value = new byte[serializeStream.getCount()];
-                        System.arraycopy(serializeStream.getData(), 0, value, 0, serializeStream.getCount());
+                        byte[] value = new byte[serializeStream.getLength()];
+                        System.arraycopy(serializeStream.getData(), 0, value, 0, serializeStream.getLength());
 
                         CqlColumn cqlColumn = new CqlColumn();
                         cqlColumn.setColumn(cassandraColumn.getBytes());

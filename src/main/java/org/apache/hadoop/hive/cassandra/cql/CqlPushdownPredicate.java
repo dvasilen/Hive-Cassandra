@@ -217,8 +217,8 @@ public class CqlPushdownPredicate {
       ByteBuffer bytes = getIndexExpressionValue(condition.getConstantDesc(), poi, writable, validator);
       serializeStream.write(ByteBufferUtil.getArray(bytes));
 
-      value = new byte[serializeStream.getCount()];
-      System.arraycopy(serializeStream.getData(), 0, value, 0, serializeStream.getCount());
+      value = new byte[serializeStream.getLength()];
+      System.arraycopy(serializeStream.getData(), 0, value, 0, serializeStream.getLength());
     } catch (HiveException e) {
       throw new IOException(e);
     }

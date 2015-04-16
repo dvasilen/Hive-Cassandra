@@ -7,6 +7,7 @@ import org.apache.hadoop.hive.cassandra.CassandraManager;
 import org.apache.hadoop.hive.cassandra.input.cql.HiveCqlInputFormat;
 import org.apache.hadoop.hive.cassandra.output.cql.HiveCqlOutputFormat;
 import org.apache.hadoop.hive.cassandra.serde.AbstractCassandraSerDe;
+import org.apache.hadoop.hive.ql.plan.ExprNodeGenericFuncDesc;
 import org.apache.hadoop.hive.cassandra.serde.cql.CqlSerDe;
 import org.apache.hadoop.hive.metastore.HiveMetaHook;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
@@ -290,6 +291,9 @@ public class CqlStorageHandler
 
   }
 
+  public void configureJobConf(TableDesc tableDesc,JobConf jobConf) {
+  }
+  
   /**
    * Cassandra requires that an IndexClause must contain at least one IndexExpression with an EQ operator
    * on a configured index column. Other IndexExpression structs may be added to the IndexClause for non-indexed
@@ -301,6 +305,7 @@ public class CqlStorageHandler
    * is found, we need to verify that there is at least one equal operator. If there is no equal operator, we can't push
    * down the predicate.
    */
+   
   @Override
   public DecomposedPredicate decomposePredicate(JobConf jobConf, Deserializer deserializer, ExprNodeDesc predicate) {
     try {
@@ -328,7 +333,7 @@ public class CqlStorageHandler
 
       DecomposedPredicate decomposedPredicate = new DecomposedPredicate();
       decomposedPredicate.pushedPredicate = analyzer.translateSearchConditions(searchConditions);
-      decomposedPredicate.residualPredicate = residualPredicate;
+      decomposedPredicate.residualPredicate = (ExprNodeGenericFuncDesc)residualPredicate;
 
       return decomposedPredicate;
     } catch (CassandraException e) {

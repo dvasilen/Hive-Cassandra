@@ -111,8 +111,8 @@ public abstract class TableMapping {
     if (!isNotNull) {
       return null;
     }
-    byte[] key = new byte[serializeStream.getCount()];
-    System.arraycopy(serializeStream.getData(), 0, key, 0, serializeStream.getCount());
+    byte[] key = new byte[serializeStream.getLength()];
+    System.arraycopy(serializeStream.getData(), 0, key, 0, serializeStream.getLength());
 
     return key;
   }

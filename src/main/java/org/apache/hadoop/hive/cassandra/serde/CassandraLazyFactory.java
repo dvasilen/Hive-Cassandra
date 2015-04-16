@@ -138,14 +138,18 @@ public class CassandraLazyFactory {
       byte escapeChar) {
 
     if (validatorTypes.size() == 0) {
-      return LazyFactory.createLazyStructInspector(columnNames,
-          typeInfos,
-          separators,
-          nullSequence,
-          lastColumnTakesRest,
-          escaped,
-          escapeChar);
-
+	  try {		
+		return LazyFactory.createLazyStructInspector(columnNames,
+			typeInfos,
+			separators,
+			nullSequence,
+			lastColumnTakesRest,
+			escaped,
+			escapeChar);
+		}
+		catch(Exception e) {
+			throw new RuntimeException(e);
+		}
     }
 
     ArrayList<ObjectInspector> columnObjectInspectors = new ArrayList<ObjectInspector>(
