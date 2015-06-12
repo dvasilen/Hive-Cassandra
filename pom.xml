@@ -1,8 +1,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.apache.hadoop.hive.cassandra</groupId>
-  <artifactId>hive-0.14.0-hadoop-2.6.0-cassandra</artifactId>
-  <version>1.2.9</version>
+  <artifactId>hive-1.2.0-hadoop-2.6.0-cassandra</artifactId>
+  <version>2.1.6</version>
   
   	<repositories>
 		<repository>
@@ -103,7 +103,7 @@
   		<dependency>
   			<groupId>org.apache.hive</groupId>
   			<artifactId>hive-serde</artifactId>
-  			<version>0.14.0</version>
+  			<version>1.2.0</version>
   			<type>jar</type>
   			<scope>compile</scope>
   		</dependency>
@@ -111,21 +111,23 @@
   		  		<dependency>
   			<groupId>org.apache.hive</groupId>
   			<artifactId>hive-exec</artifactId>
-  			<version>0.14.0</version>
+  			<version>1.2.0</version>
   			<type>jar</type>
   			<scope>compile</scope>
+			<!--
 			<exclusions>
 			<exclusion>
 				<groupId>org.apache.calcite</groupId>
 				<artifactId>*</artifactId>
 			</exclusion>
 		</exclusions>			
+		-->
 			
   		</dependency>
   		  		<dependency>
   			<groupId>org.apache.hive</groupId>
   			<artifactId>hive-metastore</artifactId>
-  			<version>0.14.0</version>
+  			<version>1.2.0</version>
   			<type>jar</type>
   			<scope>compile</scope>
   		</dependency>
@@ -133,7 +135,7 @@
   		<dependency>
   			<groupId>org.apache.cassandra</groupId>
   			<artifactId>cassandra-all</artifactId>
-  			<version>1.2.9</version>
+  			<version>2.1.6</version>
   			<type>jar</type>
   			<scope>provided</scope>
   		</dependency>
@@ -156,14 +158,15 @@
   			<version>0.90.3</version>
   			<type>jar</type>
   			<scope>provided</scope>
-			
-  			<exclusions>
+		
+  		<exclusions>
 			
         <exclusion>
           <groupId>org.apache.thrift</groupId>
           <artifactId>thrift</artifactId>
         </exclusion>
         </exclusions>
+		
   		</dependency>
 		  
   	</dependencies>

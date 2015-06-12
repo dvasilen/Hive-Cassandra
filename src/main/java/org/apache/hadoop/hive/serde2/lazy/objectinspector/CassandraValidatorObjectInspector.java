@@ -13,36 +13,37 @@ import org.apache.hadoop.io.Text;
  *
  */
 public class CassandraValidatorObjectInspector
-  extends AbstractPrimitiveLazyObjectInspector<Text> implements StringObjectInspector {
+        extends AbstractPrimitiveLazyObjectInspector<Text>
+        implements StringObjectInspector {
 
-  private final AbstractType validator;
+    private final AbstractType validator;
 
-  public CassandraValidatorObjectInspector(AbstractType validator) {
-    //super(PrimitiveObjectInspectorUtils.stringTypeEntry);
-    this.validator = validator;
-  }
+    public CassandraValidatorObjectInspector(AbstractType validator) {
+        //super(PrimitiveObjectInspectorUtils.stringTypeEntry);
+        this.validator = validator;
+    }
 
-  @Override
-  public String getTypeName() {
-    return PrimitiveObjectInspectorUtils.stringTypeEntry.typeName;
-  }
+    @Override
+    public String getTypeName() {
+        return PrimitiveObjectInspectorUtils.stringTypeEntry.typeName;
+    }
 
-  @Override
-  public Category getCategory() {
-    return Category.PRIMITIVE;
-  }
+    @Override
+    public Category getCategory() {
+        return Category.PRIMITIVE;
+    }
 
-  public AbstractType getValidatorType() {
-    return validator;
-  }
+    public AbstractType getValidatorType() {
+        return validator;
+    }
 
-  @Override
-  public String getPrimitiveJavaObject(Object o) {
-    return o == null ? null : ((CassandraLazyValidator) o).getWritableObject().toString();
-  }
+    @Override
+    public String getPrimitiveJavaObject(Object o) {
+        return o == null ? null : ((CassandraLazyValidator) o).getWritableObject().toString();
+    }
 
-  @Override
-  public Object copyObject(Object o) {
-    return o == null ? null : new CassandraLazyValidator((CassandraLazyValidator) o);
-  }
+    @Override
+    public Object copyObject(Object o) {
+        return o == null ? null : new CassandraLazyValidator((CassandraLazyValidator) o);
+    }
 }

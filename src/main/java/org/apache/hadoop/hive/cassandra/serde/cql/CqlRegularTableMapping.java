@@ -3,7 +3,7 @@ package org.apache.hadoop.hive.cassandra.serde.cql;
 import org.apache.hadoop.hive.cassandra.output.cql.CqlColumn;
 import org.apache.hadoop.hive.cassandra.output.cql.CqlPut;
 import org.apache.hadoop.hive.cassandra.serde.TableMapping;
-import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe.SerDeParameters;
+import org.apache.hadoop.hive.serde2.lazy.LazySerDeParameters;
 import org.apache.hadoop.hive.serde2.objectinspector.MapObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
@@ -18,14 +18,14 @@ public class CqlRegularTableMapping extends TableMapping {
     public CqlRegularTableMapping(
             String colFamily,
             List<String> columnNames,
-            SerDeParameters serdeParams) {
+            LazySerDeParameters serdeParams) {
         super(colFamily, columnNames, serdeParams);
     }
 
     @Override
     public Writable getWritable(List<? extends StructField> fields,
-                                List<Object> list,
-                                List<? extends StructField> declaredFields) throws IOException {
+            List<Object> list,
+            List<? extends StructField> declaredFields) throws IOException {
         return write(fields, list, declaredFields);
     }
 
