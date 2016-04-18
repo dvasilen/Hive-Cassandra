@@ -114,7 +114,7 @@ public class CqlManager {
     }
 
     public boolean doesKeyspaceExist() throws MetaException {
-        String getKeyspaceQuery = "select * from system.schema_keyspaces where keyspace_name='%s'";
+        String getKeyspaceQuery = "select * from system_schema.keyspaces where keyspace_name='%s'";
         try {
             CqlResult result = cch.getClient().execute_cql3_query(ByteBufferUtil.bytes(String.format(getKeyspaceQuery, keyspace)), Compression.NONE, ConsistencyLevel.ONE);
             List<CqlRow> rows = result.getRows();
@@ -176,7 +176,8 @@ public class CqlManager {
     private boolean checkColumnFamily() throws MetaException {
         boolean cfExists = false;
 
-        String getCFQuery = "select columnfamily_name from system.schema_columnfamilies where keyspace_name='%s';";
+        //String getCFQuery = "select columnfamily_name from system.schema_columnfamilies where keyspace_name='%s';";
+        String getCFQuery = "select table_name from system_schema.tables where keyspace_name='%s';";
         String finalQuery = String.format(getCFQuery, keyspace);
         try {
             CqlResult colFamilies = cch.getClient().execute_cql3_query(ByteBufferUtil.bytes(finalQuery), Compression.NONE, ConsistencyLevel.ONE);

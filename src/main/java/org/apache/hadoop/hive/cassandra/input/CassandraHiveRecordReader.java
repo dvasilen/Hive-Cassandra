@@ -17,7 +17,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedMap;
-import org.apache.cassandra.db.Cell;
+import org.apache.cassandra.db.rows.Cell;
 
 public class CassandraHiveRecordReader extends RecordReader<BytesWritable, MapWritable>
         implements org.apache.hadoop.mapred.RecordReader<BytesWritable, MapWritable> {
@@ -148,8 +148,8 @@ public class CassandraHiveRecordReader extends RecordReader<BytesWritable, MapWr
                     currentValue.put(keyColumn, currentKey);
 
                     // column name
-                    currentValue.put(columnColumn, convertByteBuffer(currentEntry.getValue().name().toByteBuffer()));
-
+                    currentValue.put(columnColumn, convertByteBuffer( ByteBuffer.wrap(currentEntry.getValue().column().cfName.toString().getBytes())));
+                   
                     currentValue.put(valueColumn, convertByteBuffer(currentEntry.getValue().value()));
 
                 }
@@ -178,7 +178,10 @@ public class CassandraHiveRecordReader extends RecordReader<BytesWritable, MapWr
             ByteBuffer k = e.getKey();
             Cell v = e.getValue();
 
-            if (!v.isLive(new Date().getTime())) {
+//            if (!v.isLive(new Date().getTime())) {
+//                continue;
+//            }
+            if (!v.isLive(new Date().getSeconds())) {
                 continue;
             }
 

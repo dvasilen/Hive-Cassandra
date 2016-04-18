@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.apache.hadoop.hive.cassandra</groupId>
   <artifactId>hive-1.2.0-hadoop-2.6.0-cassandra</artifactId>
-  <version>2.1.6</version>
+  <version>3.1.1</version>
   
   	<repositories>
 		<repository>
@@ -84,6 +84,15 @@
   			<type>jar</type>
   			<scope>provided</scope>
   		</dependency>
+  	 
+<dependency>
+	<groupId>com.datastax.cassandra</groupId>
+	<artifactId>cassandra-driver-core</artifactId>
+	<version>3.0.0-rc1</version>
+		<type>jar</type>
+		<scope>compile</scope>
+</dependency>
+		
   		<dependency>
   			<groupId>commons-logging</groupId>
   			<artifactId>commons-logging</artifactId>
@@ -95,7 +104,7 @@
   		<dependency>
   			<groupId>com.google.guava</groupId>
   			<artifactId>guava</artifactId>
-  			<version>r09</version>
+  			<version>19.0</version>
   			<type>jar</type>
   			<scope>compile</scope>
   		</dependency>
@@ -135,7 +144,7 @@
   		<dependency>
   			<groupId>org.apache.cassandra</groupId>
   			<artifactId>cassandra-all</artifactId>
-  			<version>2.1.6</version>
+  			<version>3.1.1</version>
   			<type>jar</type>
   			<scope>provided</scope>
   		</dependency>

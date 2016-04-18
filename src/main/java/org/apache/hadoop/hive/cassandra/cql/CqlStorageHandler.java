@@ -176,13 +176,14 @@ public class CqlStorageHandler
         if (indexedColumns != null) {
             jobProperties.put(AbstractCassandraSerDe.CASSANDRA_INDEXED_COLUMNS, indexedColumns);
         } else {
-            try {
-                Set<ColumnDef> columns = CqlPushdownPredicate.getIndexedColumns(host, Integer.parseInt(port), keyspace, columnFamily);
-                jobProperties.put(AbstractCassandraSerDe.CASSANDRA_INDEXED_COLUMNS, CqlPushdownPredicate.serializeIndexedColumns(columns));
-            } catch (CassandraException e) {
-                // this results in the property remaining unset on the Jobconf, so indexes will not be used on the C* side
-                logger.info("Error determining cassandra indexed columns, will not include in JobConf", e);
-            }
+        	//commments this
+//            try {
+//                Set<ColumnDef> columns = CqlPushdownPredicate.getIndexedColumns(host, Integer.parseInt(port), keyspace, columnFamily);
+//                jobProperties.put(AbstractCassandraSerDe.CASSANDRA_INDEXED_COLUMNS, CqlPushdownPredicate.serializeIndexedColumns(columns));
+//            } catch (CassandraException e) {
+//                // this results in the property remaining unset on the Jobconf, so indexes will not be used on the C* side
+//                logger.info("Error determining cassandra indexed columns, will not include in JobConf", e);
+//            }
         }
 
     }

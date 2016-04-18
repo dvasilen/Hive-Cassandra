@@ -20,10 +20,16 @@ package org.apache.cassandra.hadoop2;
  *
  */
 
-import com.google.common.collect.Maps;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.cassandra.dht.IPartitioner;
 import org.apache.cassandra.exceptions.ConfigurationException;
-import org.apache.cassandra.io.compress.CompressionParameters;
+import org.apache.cassandra.schema.CompressionParams;
 import org.apache.cassandra.thrift.Cassandra;
 import org.apache.cassandra.thrift.ITransportFactory;
 import org.apache.cassandra.thrift.IndexExpression;
@@ -43,12 +49,7 @@ import org.apache.thrift.transport.TTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import com.google.common.collect.Maps;
 
 public class ConfigHelper {
 
@@ -451,7 +452,7 @@ public class ConfigHelper {
     }
 
     public static String getOutputCompressionChunkLength(Configuration conf) {
-        return conf.get(OUTPUT_COMPRESSION_CHUNK_LENGTH, String.valueOf(CompressionParameters.DEFAULT_CHUNK_LENGTH));
+        return conf.get(OUTPUT_COMPRESSION_CHUNK_LENGTH, String.valueOf(CompressionParams.DEFAULT_CHUNK_LENGTH));
     }
 
     public static void setOutputCompressionClass(Configuration conf, String classname) {
@@ -476,17 +477,18 @@ public class ConfigHelper {
         return conf.getInt(THRIFT_FRAMED_TRANSPORT_SIZE_IN_MB, 15) * 1024 * 1024; // 15MB is default in Cassandra
     }
 
-    public static CompressionParameters getOutputCompressionParamaters(Configuration conf) {
+    public static CompressionParams getOutputCompressionParamaters(Configuration conf) {
         if (getOutputCompressionClass(conf) == null) {
-            return new CompressionParameters(null);
+            return   CompressionParams.noCompression();
         }
 
         Map<String, String> options = new HashMap<String, String>();
-        options.put(CompressionParameters.SSTABLE_COMPRESSION, getOutputCompressionClass(conf));
-        options.put(CompressionParameters.CHUNK_LENGTH_KB, getOutputCompressionChunkLength(conf));
+        options.put(CompressionParams.SSTABLE_COMPRESSION, getOutputCompressionClass(conf));
+        options.put(CompressionParams.CHUNK_LENGTH_KB, getOutputCompressionChunkLength(conf));
 
         try {
-            return CompressionParameters.create(options);
+        	
+            return  CompressionParams.fromMap(options);
         } catch (ConfigurationException e) {
             throw new RuntimeException(e);
         }

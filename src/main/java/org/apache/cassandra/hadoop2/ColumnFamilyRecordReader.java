@@ -27,10 +27,10 @@ import com.google.common.collect.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.cassandra.db.composites.CellNames;
+ 
 import org.apache.cassandra.exceptions.ConfigurationException;
-import org.apache.cassandra.db.Cell;
-import org.apache.cassandra.db.BufferCell;
+import org.apache.cassandra.db.rows.Cell;
+import org.apache.cassandra.db.rows.BufferCell;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.CompositeType;
 import org.apache.cassandra.db.marshal.TypeParser;
@@ -274,25 +274,32 @@ public class ColumnFamilyRecordReader extends RecordReader<ByteBuffer, SortedMap
             List<Cell> columns = new ArrayList<Cell>(super_column.columns.size());
             for (org.apache.cassandra.thrift.Column column : super_column.columns) {
                 Cell c = unthriftifySimple(column);
-				columns.add(c.withUpdatedName(CellNames.simpleDense(CompositeType.build(super_column.name, c.name().toByteBuffer()))));            }
+                
+				//columns.add(c.withUpdatedName(CellNames.simpleDense(CompositeType.build(super_column.name, c.name().toByteBuffer())))); 
+               // columns.add(c.withUpdatedName(CellNames.simpleDense(CompositeType.build(super_column.name, ByteBuffer.wrap(c.column().cfName.toString().getBytes()))))); 
+                //columns.add(c.withUpdatedName()); 
+				}
             return columns;
         }
 
         protected Cell unthriftifySimple(org.apache.cassandra.thrift.Column column) {
-			return new BufferCell(CellNames.simpleDense(column.name), column.value, column.timestamp);
+//			return new BufferCell(column.simpleDense(column.name), column.value, column.timestamp);
+        	return null;
+        	//return new BufferCell(column);
         }
 
         private Cell unthriftifyCounter(CounterColumn column) {
             //CounterColumns read the counterID from the System keyspace, so need the StorageService running and access
             //to cassandra.yaml. To avoid a Hadoop needing access to yaml return a regular Cell.
-            return new BufferCell(CellNames.simpleDense(column.name), ByteBufferUtil.bytes(column.value), 0);
+        	return null;
+            //return new BufferCell(CellNames.simpleDense(column.name), ByteBufferUtil.bytes(column.value), 0);
         }
 
         private List<Cell> unthriftifySuperCounter(CounterSuperColumn super_column) {
             List<Cell> columns = new ArrayList<Cell>(super_column.columns.size());
             for (CounterColumn column : super_column.columns) {
                 Cell c = unthriftifyCounter(column);
-                columns.add(c.withUpdatedName(CellNames.simpleDense(CompositeType.build(super_column.name, c.name().toByteBuffer()))));
+                //columns.add(c.withUpdatedName(CellNames.simpleDense(CompositeType.build(super_column.name, c.name().toByteBuffer()))));
             }
             return columns;
         }
@@ -374,7 +381,9 @@ public class ColumnFamilyRecordReader extends RecordReader<ByteBuffer, SortedMap
                 List<Cell> columns = unthriftify(cosc);
                 for (Cell column : columns) {
                     // map.put(column.name(), column);
-					map.put(column.name().toByteBuffer(), column);
+					//map.put(column.name().toByteBuffer(), column);
+                	map.put(ByteBuffer.wrap(column.column().cfName.toString().getBytes()), column);
+                	
                 }
             }
             return Pair.create(ks.key, map);
@@ -484,12 +493,15 @@ public class ColumnFamilyRecordReader extends RecordReader<ByteBuffer, SortedMap
                         List<Cell> columns = unthriftify(cosc);
                         if (columns.size() == 1) {
                         //    map = ImmutableSortedMap.of(columns.get(0).name(), columns.get(0));
-							map = ImmutableSortedMap.of(columns.get(0).name().toByteBuffer(), columns.get(0));
+							//map = ImmutableSortedMap.of(columns.get(0).name().toByteBuffer(), columns.get(0));
+                        	map = ImmutableSortedMap.of((ByteBuffer.wrap(columns.get(0).column().cfName.toString().getBytes())), columns.get(0));
                         } else {
                             assert isSuper;
                             map = new TreeMap<ByteBuffer, Cell>(CompositeType.getInstance(comparator, subComparator));
                             for (Cell column : columns) {
-                                map.put(column.name().toByteBuffer(), column);
+ 
+                                //map.put(column.name().toByteBuffer(), column);
+                            	map.put(ByteBuffer.wrap(column.column().cfName.toString().getBytes()), column);
                             }
                         }
                         return Pair.<ByteBuffer, SortedMap<ByteBuffer, Cell>>create(currentRow.key, map);

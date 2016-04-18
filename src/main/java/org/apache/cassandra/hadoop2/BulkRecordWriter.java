@@ -30,8 +30,8 @@ import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.apache.cassandra.auth.IAuthenticator;
+import org.apache.cassandra.auth.PasswordAuthenticator;
 import org.apache.cassandra.config.CFMetaData;
 import org.apache.cassandra.config.Config;
 import org.apache.cassandra.config.DatabaseDescriptor;
@@ -39,8 +39,9 @@ import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.BytesType;
 import org.apache.cassandra.dht.Range;
 import org.apache.cassandra.dht.Token;
+import org.apache.cassandra.io.sstable.CQLSSTableWriter;
 import org.apache.cassandra.io.sstable.SSTableLoader;
-import org.apache.cassandra.io.sstable.SSTableSimpleUnsortedWriter;
+//import org.apache.cassandra.io.sstable.SSTableSimpleUnsortedWriter;
 import org.apache.cassandra.streaming.StreamState;
 import org.apache.cassandra.thrift.*;
 import org.apache.cassandra.utils.OutputHandler;
@@ -62,7 +63,8 @@ final class BulkRecordWriter extends RecordWriter<ByteBuffer, List<Mutation>>
     private final static String MAX_FAILED_HOSTS = "mapreduce.output.bulkoutputformat.maxfailedhosts";
     private final Configuration conf;
     private final Logger logger = LoggerFactory.getLogger(BulkRecordWriter.class);
-    private SSTableSimpleUnsortedWriter writer;
+    //private SSTableSimpleUnsortedWriter writer;
+    private CQLSSTableWriter writer;
     private SSTableLoader loader;
     private File outputdir;
     private Progressable progress;
@@ -142,16 +144,16 @@ final class BulkRecordWriter extends RecordWriter<ByteBuffer, List<Mutation>>
                 subcomparator = BytesType.instance;
             }
 
-            this.writer = new SSTableSimpleUnsortedWriter(
-                    outputdir,
-                    org.apache.cassandra.hadoop2.ConfigHelper.getOutputPartitioner(conf),
-                    org.apache.cassandra.hadoop2.ConfigHelper.getOutputKeyspace(conf),
-                    org.apache.cassandra.hadoop2.ConfigHelper.getOutputColumnFamily(conf),
-                    BytesType.instance,
-                    subcomparator,
-                    Integer.parseInt(conf.get(BUFFER_SIZE_IN_MB, "64")),
-                    org.apache.cassandra.hadoop2.ConfigHelper.getOutputCompressionParamaters(conf));
-
+//            this.writer = new SSTableSimpleUnsortedWriter(
+//                    outputdir,
+//                    org.apache.cassandra.hadoop2.ConfigHelper.getOutputPartitioner(conf),
+//                    org.apache.cassandra.hadoop2.ConfigHelper.getOutputKeyspace(conf),
+//                    org.apache.cassandra.hadoop2.ConfigHelper.getOutputColumnFamily(conf),
+//                    BytesType.instance,
+//                    subcomparator,
+//                    Integer.parseInt(conf.get(BUFFER_SIZE_IN_MB, "64")),
+//                    org.apache.cassandra.hadoop2.ConfigHelper.getOutputCompressionParamaters(conf));
+           // this.writer =  CQLSSTableWriter.Builder
             externalClient = new ExternalClient(org.apache.cassandra.hadoop2.ConfigHelper.getOutputInitialAddress(conf),
                     org.apache.cassandra.hadoop2.ConfigHelper.getOutputRpcPort(conf),
                     username,
@@ -165,36 +167,36 @@ final class BulkRecordWriter extends RecordWriter<ByteBuffer, List<Mutation>>
     public void write(ByteBuffer keybuff, List<Mutation> value) throws IOException {
         setTypes(value.get(0));
         prepareWriter();
-        writer.newRow(keybuff);
-        for (Mutation mut : value) {
-            if (cfType == CFType.SUPER) {
-                writer.newSuperColumn(mut.getColumn_or_supercolumn().getSuper_column().name);
-                if (colType == ColType.COUNTER) {
-                    for (CounterColumn column : mut.getColumn_or_supercolumn().getCounter_super_column().columns) {
-                        writer.addCounterColumn(column.name, column.value);
-                    }
-                } else {
-                    for (Column column : mut.getColumn_or_supercolumn().getSuper_column().columns) {
-                        if (column.ttl == 0) {
-                            writer.addColumn(column.name, column.value, column.timestamp);
-                        } else {
-                            writer.addExpiringColumn(column.name, column.value, column.timestamp, column.ttl, System.currentTimeMillis() + ((long) column.ttl * 1000));
-                        }
-                    }
-                }
-            } else {
-                if (colType == ColType.COUNTER) {
-                    writer.addCounterColumn(mut.getColumn_or_supercolumn().counter_column.name, mut.getColumn_or_supercolumn().counter_column.value);
-                } else {
-                    if (mut.getColumn_or_supercolumn().column.ttl == 0) {
-                        writer.addColumn(mut.getColumn_or_supercolumn().column.name, mut.getColumn_or_supercolumn().column.value, mut.getColumn_or_supercolumn().column.timestamp);
-                    } else {
-                        writer.addExpiringColumn(mut.getColumn_or_supercolumn().column.name, mut.getColumn_or_supercolumn().column.value, mut.getColumn_or_supercolumn().column.timestamp, mut.getColumn_or_supercolumn().column.ttl, System.currentTimeMillis() + ((long) (mut.getColumn_or_supercolumn().column.ttl) * 1000));
-                    }
-                }
-            }
-            progress.progress();
-        }
+//        writer.newRow(keybuff);
+//        for (Mutation mut : value) {
+//            if (cfType == CFType.SUPER) {
+//                writer.newSuperColumn(mut.getColumn_or_supercolumn().getSuper_column().name);
+//                if (colType == ColType.COUNTER) {
+//                    for (CounterColumn column : mut.getColumn_or_supercolumn().getCounter_super_column().columns) {
+//                        writer.addCounterColumn(column.name, column.value);
+//                    }
+//                } else {
+//                    for (Column column : mut.getColumn_or_supercolumn().getSuper_column().columns) {
+//                        if (column.ttl == 0) {
+//                            writer.addColumn(column.name, column.value, column.timestamp);
+//                        } else {
+//                            writer.addExpiringColumn(column.name, column.value, column.timestamp, column.ttl, System.currentTimeMillis() + ((long) column.ttl * 1000));
+//                        }
+//                    }
+//                }
+//            } else {
+//                if (colType == ColType.COUNTER) {
+//                    writer.addCounterColumn(mut.getColumn_or_supercolumn().counter_column.name, mut.getColumn_or_supercolumn().counter_column.value);
+//                } else {
+//                    if (mut.getColumn_or_supercolumn().column.ttl == 0) {
+//                        writer.addColumn(mut.getColumn_or_supercolumn().column.name, mut.getColumn_or_supercolumn().column.value, mut.getColumn_or_supercolumn().column.timestamp);
+//                    } else {
+//                        writer.addExpiringColumn(mut.getColumn_or_supercolumn().column.name, mut.getColumn_or_supercolumn().column.value, mut.getColumn_or_supercolumn().column.timestamp, mut.getColumn_or_supercolumn().column.ttl, System.currentTimeMillis() + ((long) (mut.getColumn_or_supercolumn().column.ttl) * 1000));
+//                    }
+//                }
+//            }
+//            progress.progress();
+//        }
     }
 
     @Override
@@ -272,29 +274,32 @@ final class BulkRecordWriter extends RecordWriter<ByteBuffer, List<Mutation>>
                     client.set_keyspace(keyspace);
                     if (username != null) {
                         Map<String, String> creds = new HashMap<String, String>();
-                        creds.put(IAuthenticator.USERNAME_KEY, username);
-                        creds.put(IAuthenticator.PASSWORD_KEY, password);
+                        creds.put(PasswordAuthenticator.USERNAME_KEY, username);
+                        creds.put(PasswordAuthenticator.PASSWORD_KEY, password);
                         AuthenticationRequest authRequest = new AuthenticationRequest(creds);
                         client.login(authRequest);
                     }
 
                     List<TokenRange> tokenRanges = client.describe_ring(keyspace);
                     List<KsDef> ksDefs = client.describe_keyspaces();
-
-                    setPartitioner(client.describe_partitioner());
-                    Token.TokenFactory tkFactory = getPartitioner().getTokenFactory();
-
-                    for (TokenRange tr : tokenRanges) {
-                        Range<Token> range = new Range<Token>(tkFactory.fromString(tr.start_token), tkFactory.fromString(tr.end_token));
-                        for (String ep : tr.endpoints) {
-                            addRangeForEndpoint(range, InetAddress.getByName(ep));
-                        }
-                    }
+//
+//                    setPartitioner(client.describe_partitioner());
+//                    Token.TokenFactory tkFactory = getPartitioner().getTokenFactory();
+//
+//                    for (TokenRange tr : tokenRanges) {
+//                        Range<Token> range = new Range<Token>(tkFactory.fromString(tr.start_token), tkFactory.fromString(tr.end_token));
+//                        for (String ep : tr.endpoints) {
+//                            addRangeForEndpoint(range, InetAddress.getByName(ep));
+//                        }
+//                    }
 
                     for (KsDef ksDef : ksDefs) {
                         Map<String, CFMetaData> cfs = new HashMap<String, CFMetaData>(ksDef.cf_defs.size());
                         for (CfDef cfDef : ksDef.cf_defs) {
-                            cfs.put(cfDef.name, CFMetaData.fromThrift(cfDef));
+                        	
+                           // cfs.put(cfDef.name, CFMetaData.fromThrift(cfDef));
+                        	 cfs.put(cfDef.name, CFMetaData.Builder.create(cfDef.getKeyspace(), cfDef.getName()).build());
+                             
                         }
                         knownCfs.put(ksDef.name, cfs);
                     }
@@ -319,6 +324,11 @@ final class BulkRecordWriter extends RecordWriter<ByteBuffer, List<Mutation>>
             TProtocol protocol = new org.apache.thrift.protocol.TBinaryProtocol(trans);
             return new Cassandra.Client(protocol);
         }
+
+		@Override
+		public CFMetaData getTableMetadata(String tableName) {
+			return null;
+		}
     }
 
     static class NullOutputHandler implements OutputHandler {

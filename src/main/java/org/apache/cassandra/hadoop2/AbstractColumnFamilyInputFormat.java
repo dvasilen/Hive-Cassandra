@@ -20,7 +20,9 @@ package org.apache.cassandra.hadoop2;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+
 import org.apache.cassandra.auth.IAuthenticator;
+import org.apache.cassandra.auth.PasswordAuthenticator;
 import org.apache.cassandra.dht.IPartitioner;
 import org.apache.cassandra.dht.Range;
 import org.apache.cassandra.dht.Token;
@@ -101,8 +103,8 @@ public abstract class AbstractColumnFamilyInputFormat<K, Y> extends InputFormat<
         client.set_keyspace(ConfigHelper.getInputKeyspace(conf));
         if (ConfigHelper.getInputKeyspaceUserName(conf) != null) {
             Map<String, String> creds = new HashMap<String, String>();
-            creds.put(IAuthenticator.USERNAME_KEY, ConfigHelper.getInputKeyspaceUserName(conf));
-            creds.put(IAuthenticator.PASSWORD_KEY, ConfigHelper.getInputKeyspacePassword(conf));
+            creds.put(PasswordAuthenticator.USERNAME_KEY, ConfigHelper.getInputKeyspaceUserName(conf));
+            creds.put(PasswordAuthenticator.PASSWORD_KEY, ConfigHelper.getInputKeyspacePassword(conf));
             AuthenticationRequest authRequest = new AuthenticationRequest(creds);
             client.login(authRequest);
         }
@@ -148,9 +150,11 @@ public abstract class AbstractColumnFamilyInputFormat<K, Y> extends InputFormat<
                     if (jobKeyRange.end_token != null) {
                         throw new IllegalArgumentException("only start_key supported");
                     }
+//                    jobRange = new Range<Token>(partitioner.getToken(jobKeyRange.start_key),
+//                            partitioner.getToken(jobKeyRange.end_key),
+//                            partitioner);
                     jobRange = new Range<Token>(partitioner.getToken(jobKeyRange.start_key),
-                            partitioner.getToken(jobKeyRange.end_key),
-                            partitioner);
+                            partitioner.getToken(jobKeyRange.end_key));
                 }
             }
 
@@ -162,9 +166,11 @@ public abstract class AbstractColumnFamilyInputFormat<K, Y> extends InputFormat<
                     Future<List<InputSplit>> future = executor.submit(callable);
                     splitfutures.put(future, callable);
                 } else {
+//                    Range<Token> dhtRange = new Range<Token>(partitioner.getTokenFactory().fromString(range.start_token),
+//                            partitioner.getTokenFactory().fromString(range.end_token),
+//                            partitioner);
                     Range<Token> dhtRange = new Range<Token>(partitioner.getTokenFactory().fromString(range.start_token),
-                            partitioner.getTokenFactory().fromString(range.end_token),
-                            partitioner);
+                            partitioner.getTokenFactory().fromString(range.end_token));
 
                     if (dhtRange.intersects(jobRange)) {
                         for (Range<Token> intersection : dhtRange.intersectionWith(jobRange)) {
@@ -261,7 +267,8 @@ public abstract class AbstractColumnFamilyInputFormat<K, Y> extends InputFormat<
             for (CfSplit subSplit : subSplits) {
                 Token left = factory.fromString(subSplit.getStart_token());
                 Token right = factory.fromString(subSplit.getEnd_token());
-                Range<Token> range = new Range<Token>(left, right, partitioner);
+               // Range<Token> range = new Range<Token>(left, right, partitioner);
+                Range<Token> range = new Range<Token>(left, right);
                 List<Range<Token>> ranges = range.isWrapAround() ? range.unwrap() : ImmutableList.of(range);
                 for (Range<Token> subrange : ranges) {
                     ColumnFamilySplit split
